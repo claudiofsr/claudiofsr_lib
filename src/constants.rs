@@ -1,0 +1,267 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
+
+/*
+How to construct large const arrays in Rust without manually writing values to construct it
+https://stackoverflow.com/questions/74320587/how-to-construct-large-const-arrays-in-rust-without-manually-writing-values-to-c
+let all_cst: Vec<u16> = (1..=99).collect();
+let all_cst: [u16; 99] = core::array::from_fn(|i| (i + 1) as u16);
+
+Note that arrays in Rust are different from vectors.
+
+An array is a fixed length stack-based set of things. 
+let x = [1, 2, 3, 4] is an array. 
+While you can read from it and mutate individual elements, you cannot grow it. 
+
+A vector is heap based and has variable length (and is growable).
+let y = vec![1, 2, 3, 4] is a vector. 
+You can append elements to this if you need.
+*/
+
+/// convert `array: [T; N]` to `Vec<U>`
+/// 
+/// Example:
+/// ```
+/// use claudiofsr_lib::array_to_vec;
+///
+/// let array = [1, 2, 3];
+/// let vector: Vec<Option<u16>> = array_to_vec(array);
+/// 
+/// assert_eq!(
+///     vector,
+///     [Some(1), Some(2), Some(3)]
+/// );
+/// ```
+/// 
+/// https://practice.rs/generics-traits/const-generics.html
+/// 
+/// https://doc.rust-lang.org/reference/items/generics.html
+pub fn array_to_vec<T, U, const N: usize>(array: [T; N]) -> Vec<U>
+where
+    U: std::convert::From<T>,
+{
+    array
+        .into_iter()
+        .map(T::into)
+        .collect()
+}
+
+/// Valores de 1 a 99
+pub const CST_ALL: [u16; 99] = {
+    let mut output = [0; 99];
+    let mut index: usize = 0;
+
+    while index < output.len() {
+        output[index] = index as u16 + 1;
+        index += 1;
+    }
+
+    output
+};
+
+/// Valores de 101 a 199
+pub const BASE_CALC_SOMA: [u16; 99] = {
+    let mut output = [0; 99];
+    let mut index: usize = 0;
+
+    while index < output.len() {
+        output[index] = index as u16 + 101;
+        index += 1;
+    }
+
+    output
+};
+
+pub const CST_CREDITO: [u16; 14] = [
+    50, 51, 52, 53, 54, 55, 56,
+    60, 61, 62, 63, 64, 65, 66,
+];
+
+pub const CST_CREDITO_BASICO: [u16; 7] = [
+    50, 51, 52, 53, 54, 55, 56,
+];
+
+pub const CST_CREDITO_PRESUMIDO: [u16; 7] = [
+    60, 61, 62, 63, 64, 65, 66,
+];
+
+/// Valores de 1 a 9
+pub const CST_RECEITA_BRUTA: [u16; 9] = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9,
+];
+
+/// Valores de 1 a 18
+pub const CODIGO_DA_NATUREZA_BC: [u16; 18] = {
+    let mut output = [0; 18];
+    let mut index: usize = 0;
+
+    while index < output.len() {
+        output[index] = index as u16 + 1;
+        index += 1;
+    }
+
+    output
+};
+
+pub const CFOP_VENDA_DE_IMOBILIZADO: [u16; 3] = [
+    5551, 6551, 7551,
+];
+
+/** 
+CFOP de Exportação:
+```ignore
+Grupo 7:
+
+    7000 .. 7999,
+
+Fim específico de exportação:
+
+    1500, 1501, 1503, 1504, 1505, 1506,
+
+    2500, 2501, 2503, 2504, 2505, 2506,
+
+    3500, 3503,
+
+    5500, 5501, 5502, 5503, 5504, 5505,
+
+    6500, 6501, 6502, 6503, 6504, 6505,
+```
+### Fonte:
+
+<https://www.gov.br/receitafederal/pt-br/assuntos/aduana-e-comercio-exterior/manuais/exportacao-portal-unico/situacoes-especiais-na-exportacao/exportacao-indireta>
+
+<www.confaz.fazenda.gov.br/legislacao/ajustes/sinief/cfop_cvsn_70_vigente>
+*/
+pub const CFOP_DE_EXPORTACAO: [u16; 1026] = {
+    let mut output = [0; 1026];
+
+    let fim_de_exportacao: [u16; 26] = [
+        1500, 1501, 1503, 1504, 1505, 1506,
+        2500, 2501, 2503, 2504, 2505, 2506,
+        3500, 3503,
+        5500, 5501, 5502, 5503, 5504, 5505,
+        6500, 6501, 6502, 6503, 6504, 6505,
+    ];
+
+    let mut index: usize = 0;
+
+    while index < output.len() {
+
+        if index < 26 {
+            output[index] = fim_de_exportacao[index];
+        } else {
+            output[index] = (index - 26) as u16 + 7000;
+        }
+        
+        index += 1;
+    }
+
+    output
+};
+
+// Regex, flags:
+// x: verbose mode, ignores whitespace and allow line comments (starting with `#`)
+// i: case-insensitive: letters match both upper and lower case
+pub const PATTERN: &str = r#"(?xi)
+# Esta é uma lista com possíveis Receitas Não Operacionais (outras receitas)
+# a depender das atividades que constituam objeto da empresa:
+    Atualiz.*Monet|   # Atualização Monetária
+    Vend.*Imobiliz|   # Venda de Imobilizado
+    Var.*Camb|        # Variação Cambial
+    Desc.*Financ|     # Descontos Financeiros
+    Rec.*Financ|      # Receitas Financeiras
+    Rec.*N.*Oper|     # Receitas Não Operacionais
+    Outra.*Rec.*Oper| # Outras Receitas Operacionais (mesmo que Receitas Não Operacionais)
+    Juro|             # Juros sobre Capital Próprio
+    Selic|            # Selic é a taxa básica de juros da economia
+    Hedge
+"#;
+
+/// Example:
+/// 
+/// <https://docs.rs/once_cell/latest/once_cell/sync/struct.Lazy.html>
+pub static OUTRAS_RECEITAS_REGEX: Lazy<Regex> = Lazy::new(|| 
+    Regex::new(PATTERN)
+        .expect("OUTRAS_RECEITAS_REGEX regex inválida!")
+);
+
+#[cfg(test)]
+mod functions {
+    use super::*;
+
+    // cargo test -- --help
+    // cargo test -- --nocapture
+    // cargo test -- --show-output
+
+    #[test]
+    fn find_other_revenues() {
+        // cargo test -- --show-output find_other_revenues
+        let lines = vec![
+            "foo bar",
+            "Atualização Monetária",
+            "Outras Receitas Operacionais",
+            "Juros sobre Capital Próprio",
+            "Descontos",
+        ];
+
+        let mut result = Vec::new();
+
+        for line in lines {
+            let find: bool = OUTRAS_RECEITAS_REGEX.is_match(line);
+            result.push(find);
+        }
+
+        assert_eq!(
+            vec![false, true, true, true, false],
+            result
+        );
+    }
+
+    #[test]
+    fn get_cst_all_options() {
+        // cargo test -- --show-output get_cst_all_options
+        let csts: Vec<Option<u16>> = array_to_vec(CST_ALL);
+        println!("csts: {csts:?}");
+
+        assert_eq!(csts[0],  Some(1));
+        assert_eq!(csts[98], Some(99));
+    }
+
+    #[test]
+    fn get_cfop_options() {
+        // cargo test -- --show-output get_cfop_options
+        
+        // let cfops: Vec<Option<u16>> = array_to_vec(CFOP_DE_EXPORTACAO);
+        let cfops = CFOP_DE_EXPORTACAO.map(Some);
+        
+        println!("cfops: {cfops:?}");
+
+        assert_eq!(cfops[0],  Some(1500));
+        assert_eq!(cfops[26], Some(7000));
+    }
+
+    #[test]
+    fn convert() {
+        // cargo test -- --show-output convert
+        let nats: Vec<Option<u16>> = CODIGO_DA_NATUREZA_BC
+            .into_iter()
+            .map(Some)
+            .collect();
+
+        println!("nats: {nats:?}");
+
+        assert_eq!(nats[0],  Some(1));
+        assert_eq!(nats[17], Some(18));
+    }
+
+    #[test]
+    fn map_to_option() {
+        // cargo test -- --show-output map_to_option
+        let nats = CODIGO_DA_NATUREZA_BC.map(Some);
+
+        println!("nats: {nats:?}");
+
+        assert_eq!(nats[0],  Some(1));
+        assert_eq!(nats[17], Some(18));
+    }
+}
