@@ -2,6 +2,7 @@
 pub trait StringExtension {
     fn remove_all_whitespace(&mut self);
     fn remove_all_char(&mut self, c: char);
+    fn get_last_n_chars(self, num: usize) -> String;
 }
 
 impl StringExtension for String {
@@ -33,6 +34,21 @@ impl StringExtension for String {
     */
     fn remove_all_char(&mut self, ch: char) {
         self.retain(|c| c != ch);
+    }
+
+    /**
+    Get the last n character of a String.
+    ```
+        use claudiofsr_lib::StringExtension;
+
+        let text = String::from("for bar bbar よção").get_last_n_chars(8);
+        assert_eq!(text, "bar よção");
+    ```
+    */
+    fn get_last_n_chars(self, num: usize) -> String {
+        let length = self.chars().count();
+        //self.drain(0..(length - num));
+        self[(length - num) ..].to_string()
     }
 }
 
