@@ -2,6 +2,7 @@
 pub trait StringExtension {
     fn remove_all_whitespace(&mut self);
     fn remove_all_char(&mut self, c: char);
+    fn get_first_n_chars(self, num: usize) -> String;
     fn get_last_n_chars(self, num: usize) -> String;
 }
 
@@ -37,18 +38,35 @@ impl StringExtension for String {
     }
 
     /**
+    Get the first n character of a String.
+    ```
+        use claudiofsr_lib::StringExtension;
+
+        let text = String::from("♥foo よção♥ bar").get_first_n_chars(10);
+        assert_eq!(text, "♥foo よção♥");
+    ```
+    */
+    fn get_first_n_chars(self, num: usize) -> String {
+        self.chars().take(num).collect()
+    }
+
+    /**
     Get the last n character of a String.
     ```
         use claudiofsr_lib::StringExtension;
 
-        let text = String::from("for bar bbar よção").get_last_n_chars(8);
-        assert_eq!(text, "bar よção");
+        let text = String::from("♥foo よção♥ bar").get_last_n_chars(9);
+        assert_eq!(text, "よção♥ bar");
     ```
     */
     fn get_last_n_chars(self, num: usize) -> String {
         let length = self.chars().count();
-        //self.drain(0..(length - num));
-        self[(length - num) ..].to_string()
+        let minimum = length.min(num);
+        //println!("length: {length}; minimum: {minimum}");
+        //println!("chars: {:?}", self.chars());
+        
+        // attempt to subtract without overflow
+        self.chars().skip(length - minimum).collect()
     }
 }
 
