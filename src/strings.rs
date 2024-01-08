@@ -1,9 +1,59 @@
+use std::ops::Deref;
+
+/// Get the first (or last) n character of a String or &str.
+/// 
+/// <https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations>
+pub trait GetNChars {
+    /**
+    Get the first n character of a String or &str.
+    ```
+        use claudiofsr_lib::GetNChars;
+
+        let text = String::from("♥foo よção♥ bar").get_first_n_chars(10);
+        assert_eq!(text, "♥foo よção♥");
+
+        let text = "♥foo よção♥ bar".get_first_n_chars(10);
+        assert_eq!(text, "♥foo よção♥");
+    ```
+    */
+    fn get_first_n_chars(&self, num: usize) -> String
+    where 
+        Self: Sized + Deref<Target=str>,
+    {
+        self.chars().take(num).collect()
+    }
+
+    /**
+    Get the last n character of a String or &str.
+    ```
+        use claudiofsr_lib::GetNChars;
+
+        let text = String::from("♥foo よção♥ bar").get_last_n_chars(9);
+        assert_eq!(text, "よção♥ bar");
+
+        let text = "♥foo よção♥ bar".get_last_n_chars(9);
+        assert_eq!(text, "よção♥ bar");
+    ```
+    */
+    fn get_last_n_chars(&self, num: usize) -> String
+    where 
+        Self: Sized + Deref<Target=str>,
+    {
+        let length = self.chars().count();
+        let minimum = length.min(num);
+        
+        // Attempt to subtract without overflow
+        self.chars().skip(length - minimum).collect()
+    }
+}
+
+impl GetNChars for String {}
+impl GetNChars for &str {}
+
 /// Trait extension to String
 pub trait StringExtension {
     fn remove_all_whitespace(&mut self);
     fn remove_all_char(&mut self, c: char);
-    fn get_first_n_chars(self, num: usize) -> String;
-    fn get_last_n_chars(self, num: usize) -> String;
 }
 
 impl StringExtension for String {
@@ -36,38 +86,6 @@ impl StringExtension for String {
     fn remove_all_char(&mut self, ch: char) {
         self.retain(|c| c != ch);
     }
-
-    /**
-    Get the first n character of a String.
-    ```
-        use claudiofsr_lib::StringExtension;
-
-        let text = String::from("♥foo よção♥ bar").get_first_n_chars(10);
-        assert_eq!(text, "♥foo よção♥");
-    ```
-    */
-    fn get_first_n_chars(self, num: usize) -> String {
-        self.chars().take(num).collect()
-    }
-
-    /**
-    Get the last n character of a String.
-    ```
-        use claudiofsr_lib::StringExtension;
-
-        let text = String::from("♥foo よção♥ bar").get_last_n_chars(9);
-        assert_eq!(text, "よção♥ bar");
-    ```
-    */
-    fn get_last_n_chars(self, num: usize) -> String {
-        let length = self.chars().count();
-        let minimum = length.min(num);
-        //println!("length: {length}; minimum: {minimum}");
-        //println!("chars: {:?}", self.chars());
-        
-        // attempt to subtract without overflow
-        self.chars().skip(length - minimum).collect()
-    }
 }
 
 /// Trait extension to &str
@@ -87,7 +105,6 @@ pub trait StrExtension {
     fn select_first_digits(self) -> String;
 
     // Output: &str
-    fn get_last_n_chars(&self, num: usize) -> &str;
     fn retain_first_digits(&self) -> &str;
     fn strip_prefix_and_sufix(&self, delimiter_byte: u8) -> &str;
 
@@ -262,20 +279,6 @@ impl StrExtension for &str {
             .chars()
             .map_while(|x| x.is_ascii_digit().then_some(x))
             .collect::<String>()
-    }
-
-    /**
-    Get the last n character of a &str.
-    ```
-        use claudiofsr_lib::StrExtension;
-
-        let text: &str = "for bar bbar ção".get_last_n_chars(7);
-        assert_eq!(text, "bar ção");
-    ```
-    */
-    fn get_last_n_chars(&self, num: usize) -> &str {
-        let length = self.chars().count();
-        &self[(length - num) ..]
     }
 
     /**
