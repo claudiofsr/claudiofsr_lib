@@ -38,9 +38,9 @@ You can append elements to this if you need.
 /// assert_eq!(vector, [1, 2, 3]);
 /// ```
 ///
-/// https://practice.rs/generics-traits/const-generics.html
+/// <https://practice.rs/generics-traits/const-generics.html>
 ///
-/// https://doc.rust-lang.org/reference/items/generics.html
+/// <https://doc.rust-lang.org/reference/items/generics.html>
 pub fn array_to_vec<T, U, const N: usize>(array: [T; N]) -> Vec<U>
 where
     U: std::convert::From<T>,
