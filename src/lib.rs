@@ -719,6 +719,67 @@ where
     }
 }
 
+/// Try Convert Extension
+pub trait TryConvertExtension<T> {
+    /**
+    Try converting type T to type U
+
+    "Simple and safe type conversions that may fail
+    in a controlled way under some circumstances.""
+
+    Example:
+    ```
+        use claudiofsr_lib::TryConvertExtension;
+
+        let type_u8: u8 = 5;
+        let type_i16: i16 = 5;
+        let type_u32: u32 = 5;
+        let type_f64: f64 = 5.0;
+
+        let value_f64: f64 = type_u8.try_convert();
+        assert_eq!(type_f64, value_f64);
+
+        let value_u32: u32 = type_i16.try_convert();
+        assert_eq!(type_u32, value_u32);
+
+        let value_usize: usize = 7_i32.try_convert();
+        assert_eq!(7_usize, value_usize);
+
+        let value_f64: f64 = 9_u16.try_convert();
+        assert_eq!(9.0_f64, value_f64);
+
+        // With TurboFish
+
+        let value_u32 = type_i16.try_convert::<u32>();
+        assert_eq!(type_u32, value_u32);
+
+        let value_f64 = 2_i32.try_convert::<f64>();
+        assert_eq!(2.0_f64, value_f64);
+    ```
+    */
+    fn try_convert<U>(self) -> U
+    where
+        U: TryFrom<T>,
+        <U as TryFrom<T>>::Error: std::fmt::Display;
+}
+
+impl<T> TryConvertExtension<T> for T {
+    fn try_convert<U>(self) -> U
+    where
+        U: TryFrom<T>,
+        <U as TryFrom<T>>::Error: std::fmt::Display
+    {
+        match U::try_from(self) {
+            Ok(type_u) => type_u,
+            Err(why) => {
+                let t = std::any::type_name::<T>();
+                let u = std::any::type_name::<U>();
+                panic!("Error converting from {t} to {u}: {why}")
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod functions {
     use super::*;
