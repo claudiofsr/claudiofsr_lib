@@ -35,9 +35,9 @@ pub trait RoundFloat {
         let result03: f32 = number03.round_float(5); // 5i32
         assert_eq!(result03, 0.66667);
 
-        let number04: f32 = 45.9997;
-        let result04: f32 = number04.round_float(3); // 3i32
-        assert_eq!(result04, 46.0);
+        let number04: f32 = 5.99997;
+        let result04: f32 = number04.round_float(4); // 4i32
+        assert_eq!(result04, 6.0); // 6.0000
     ```
     <https://floating-point-gui.de/languages/rust>
 
