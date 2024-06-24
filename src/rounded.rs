@@ -49,7 +49,7 @@ pub trait RoundFloat {
 impl RoundFloat for f64 {
     fn round_float(self, decimal_places: impl Into<i64>) -> f64 {
         let dec: i64 = decimal_places.into();
-        if dec == 0 {
+        if dec <= 0 {
             self.round()
         } else {
             let multiplier: f64 = 10.0_f64.powf(dec as f64);
@@ -61,7 +61,7 @@ impl RoundFloat for f64 {
 impl RoundFloat for f32 {
     fn round_float(self, decimal_places: impl Into<i64>) -> f32 {
         let dec: i64 = decimal_places.into();
-        if dec == 0 {
+        if dec <= 0 {
             self.round()
         } else {
             let multiplier: f64 = 10.0_f64.powf(dec as f64);
