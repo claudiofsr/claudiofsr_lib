@@ -22,22 +22,30 @@ pub trait RoundFloat {
         use claudiofsr_lib::RoundFloat;
 
         let decimal_places: u32 = 2;
-        let number01: f64 = 1.454999;
-        let result01: f64 = number01.round_float(decimal_places);
-        assert!(matches!(result01, 1.45));
+        let number: f64 = 1.454999;
+        let result: f64 = number.round_float(decimal_places);
+        assert_eq!(result, 1.45);
 
         let decimal_places: usize = 2;
-        let number02: f64 = 1.455000;
-        let result02: f64 = number02.round_float(decimal_places as i64);
-        assert!(matches!(result02, 1.46));
+        let number: f64 = 1.455000;
+        let result: f64 = number.round_float(decimal_places as i64);
+        assert_eq!(result, 1.46);
 
-        let number03: f32 = 2.0 / 3.0;
-        let result03: f32 = number03.round_float(5); // 5i32
-        assert_eq!(result03, 0.66667);
+        let number = 1.455000;
+        let result = number.round_float(1);
+        assert_eq!(result, 1.5);
 
-        let number04: f32 = 5.99997;
-        let result04: f32 = number04.round_float(4); // 4i32
-        assert_eq!(result04, 6.0); // 6.0000
+        let number = 1.455000;
+        let result = number.round_float(0);
+        assert_eq!(result, 1.0);
+
+        let number: f32 = -2.0 / 3.0;
+        let result: f32 = number.round_float(5); // 5i32
+        assert_eq!(result, -0.66667);
+
+        let number: f32 = 5.99997;
+        let result: f32 = number.round_float(4); // 4i32
+        assert_eq!(result, 6.0); // 6.0000
     ```
     <https://floating-point-gui.de/languages/rust>
 
@@ -49,7 +57,7 @@ pub trait RoundFloat {
 impl RoundFloat for f64 {
     fn round_float(self, decimal_places: impl Into<i64>) -> f64 {
         let dec: i64 = decimal_places.into();
-        if dec <= 0 {
+        if dec <= 0 || self == 0.0 {
             self.round()
         } else {
             let multiplier: f64 = 10.0_f64.powf(dec as f64);
@@ -61,7 +69,7 @@ impl RoundFloat for f64 {
 impl RoundFloat for f32 {
     fn round_float(self, decimal_places: impl Into<i64>) -> f32 {
         let dec: i64 = decimal_places.into();
-        if dec <= 0 {
+        if dec <= 0 || self == 0.0 {
             self.round()
         } else {
             let multiplier: f64 = 10.0_f64.powf(dec as f64);
