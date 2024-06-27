@@ -8,7 +8,13 @@ pub mod svec {
     Example:
     ```
         use claudiofsr_lib::svec;
-        let v: Vec<String> = svec!["this", "that", "the other"];
+
+        let v: Vec<String> = svec![
+            "this",
+            "that",
+            "the other", // with or without a comma at the end
+        ];
+
         assert_eq!(v, vec![
             String::from("this"),
             String::from("that"),
@@ -16,9 +22,11 @@ pub mod svec {
         ]);
     ```
     <https://doc.rust-lang.org/book/ch19-06-macros.html>
+
+    <https://doc.rust-lang.org/std/macro.vec.html>
     */
     macro_rules! svec {
-        ( $( $x:expr ),* ) => {
+        ( $($x:expr),+ $(,)?) => {
             {
                 Vec::from([$(String::from($x)),*])
             }
