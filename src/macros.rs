@@ -23,6 +23,7 @@ pub mod svec {
         assert!(v1.len() == 3);
 
         let v2 = svec![ "a", "1", "abc", "", "foobar"];
+
         assert_eq!(v2, vec![
             String::from("a"),
             String::from("1"),
