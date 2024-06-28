@@ -9,17 +9,28 @@ pub mod svec {
     ```
         use claudiofsr_lib::svec;
 
-        let v: Vec<String> = svec![
+        let v1: Vec<String> = svec![
             "this",
             "that",
             "the other", // with or without a comma at the end
         ];
 
-        assert_eq!(v, vec![
+        assert_eq!(v1, vec![
             String::from("this"),
             String::from("that"),
             String::from("the other"),
         ]);
+        assert!(v1.len() == 3);
+
+        let v2 = svec![ "a", "1", "abc", "", "foobar"];
+        assert_eq!(v2, vec![
+            String::from("a"),
+            String::from("1"),
+            String::from("abc"),
+            String::from(""),
+            String::from("foobar"),
+        ]);
+        assert!(v2.len() == 5);
     ```
     <https://doc.rust-lang.org/book/ch19-06-macros.html>
 
@@ -100,7 +111,7 @@ pub mod match_cast {
                     val as Option<NaiveDate> => {
                         // eprintln!("val: {val:?}"); // Some(2015-03-14)
                         val.as_ref().map(|date| date.to_string().chars().count())
-                    },
+                    }
                 });
 
                 opt_value_len.unwrap_or(0)
@@ -116,7 +127,7 @@ pub mod match_cast {
     Font: <https://github.com/therustmonk/match_cast/blob/master/src/lib.rs>
     */
     macro_rules! match_cast {
-        ($any:ident { $( $bind:ident as $patt:ty => $body:block , )+ }) => {{
+        ($any:ident { $( $bind:ident as $patt:ty => $body:block $(,)? )+ }) => {{
             let downcast = || {
                 $(
                 if let Some($bind) = $any.downcast_ref::<$patt>() {
@@ -233,7 +244,7 @@ pub mod match_cast {
                         val as Option<NaiveDate> => {
                             // eprintln!("val: {val:?}"); // Some(2015-03-14)
                             val.as_ref().map(|date| date.to_string().chars().count())
-                        },
+                        }
                     });
 
                     opt_value_len.unwrap_or(0)
