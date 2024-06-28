@@ -14,24 +14,23 @@ pub mod svec {
             "that",
             "the other", // with or without a comma at the end
         ];
-
-        assert_eq!(v1, vec![
+        let result1 = vec![
             String::from("this"),
             String::from("that"),
             String::from("the other"),
-        ]);
-        assert!(v1.len() == 3);
+        ];
 
         let v2 = svec![ "a", "1", "abc", "", "foobar"];
+        let result2 = vec![
+            "a",
+            "1",
+            "abc",
+            "",
+            "foobar",
+        ].iter().map(ToString::to_string).collect::<Vec<String>>();
 
-        assert_eq!(v2, vec![
-            "a".to_string(),
-            "1".to_string(),
-            "abc".to_string(),
-            "".to_string(),
-            "foobar".to_string(),
-        ]);
-        assert!(v2.len() == 5);
+        assert_eq!(v1, result1);
+        assert_eq!(v2, result2);
     ```
     <https://doc.rust-lang.org/book/ch19-06-macros.html>
 
