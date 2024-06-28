@@ -25,11 +25,11 @@ pub mod svec {
         let v2 = svec![ "a", "1", "abc", "", "foobar"];
 
         assert_eq!(v2, vec![
-            String::from("a"),
-            String::from("1"),
-            String::from("abc"),
-            String::from(""),
-            String::from("foobar"),
+            "a".to_string(),
+            "1".to_string(),
+            "abc".to_string(),
+            "".to_string(),
+            "foobar".to_string(),
         ]);
         assert!(v2.len() == 5);
     ```
