@@ -1,5 +1,11 @@
 use itertools::Itertools;
-use std::collections::{BTreeSet, HashSet};
+use std::{
+    collections::{BTreeSet, HashSet},
+    error::Error,
+    fs::File,
+    io::Write,
+    path::Path,
+};
 
 /// Trait extension for HashSet
 pub trait HashSetExtension<T> {
@@ -64,11 +70,16 @@ pub trait HashSetExtension<T> {
     fn to_vec_sorted(&self) -> Vec<T>
     where
         T: Ord;
+
+    /// Write all HashSet elements to an output file.
+    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    where
+        P: AsRef<Path>;
 }
 
 impl<T> HashSetExtension<T> for HashSet<T>
 where
-    T: Clone,
+    T: Clone + std::fmt::Display,
 {
     fn to_vec(&self) -> Vec<T> {
         self.iter().cloned().collect()
@@ -79,6 +90,28 @@ where
         T: Ord,
     {
         self.iter().sorted().cloned().collect()
+    }
+
+    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    where
+        P: AsRef<Path>,
+    {
+        // If the set is empty, return Ok() immediately
+        if self.is_empty() {
+            return Ok(());
+        }
+
+        // Create a new file with the given path
+        let mut file = File::create(output_file)?;
+
+        // Iterate over each element in the BTreeSet
+        for elem in self {
+            // Write each element to the file, followed by a newline character
+            writeln!(file, "{}", elem)?;
+        }
+
+        // Return Ok() to indicate that writing was successful
+        Ok(())
     }
 }
 
@@ -111,13 +144,40 @@ pub trait BTreeSetExtension<T> {
     ```
     */
     fn to_vec(&self) -> Vec<T>;
+
+    /// Write all BTreeSet elements to an output file.
+    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    where
+        P: AsRef<Path>;
 }
 
 impl<T> BTreeSetExtension<T> for BTreeSet<T>
 where
-    T: Clone,
+    T: Clone + std::fmt::Display,
 {
     fn to_vec(&self) -> Vec<T> {
         self.iter().cloned().collect()
+    }
+
+    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    where
+        P: AsRef<Path>,
+    {
+        // If the set is empty, return Ok() immediately
+        if self.is_empty() {
+            return Ok(());
+        }
+
+        // Create a new file with the given path
+        let mut file = File::create(output_file)?;
+
+        // Iterate over each element in the BTreeSet
+        for elem in self {
+            // Write each element to the file, followed by a newline character
+            writeln!(file, "{}", elem)?;
+        }
+
+        // Return Ok() to indicate that writing was successful
+        Ok(())
     }
 }
