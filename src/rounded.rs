@@ -51,7 +51,9 @@ pub trait RoundFloat {
 
     <https://doc.rust-lang.org/std/primitive.f64.html#method.powf>
     */
-    fn round_float(self, decimal_places: impl Into<i64>) -> Self;
+    fn round_float(self, decimal_places: impl Into<i64>) -> Self
+    where
+        Self: std::marker::Sized; // This trait is object safe.
 }
 
 impl RoundFloat for f64 {
@@ -60,7 +62,7 @@ impl RoundFloat for f64 {
         if dec <= 0 || self == 0.0 {
             self.round()
         } else {
-            let multiplier: f64 = 10.0_f64.powf(dec as f64);
+            let multiplier: f64 = 10.0_f64.powi(dec as i32);
             (self * multiplier).round() / multiplier
         }
     }
@@ -72,7 +74,7 @@ impl RoundFloat for f32 {
         if dec <= 0 || self == 0.0 {
             self.round()
         } else {
-            let multiplier: f64 = 10.0_f64.powf(dec as f64);
+            let multiplier: f64 = 10.0_f64.powi(dec as i32);
             (((self as f64) * multiplier).round() / multiplier) as f32
         }
     }
