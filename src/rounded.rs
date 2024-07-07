@@ -35,8 +35,8 @@ pub trait RoundFloat<T> {
         let result: f64 = number.round_float(decimal_places);
         assert_eq!(result, 3.455001);
 
-        let result = 1.455000.round_float(1); // 1i32
-        assert_eq!(result, 1.5);
+        let result = 1.455050.round_float(4); // 4i32
+        assert_eq!(result, 1.4551);
 
         let result = 1.455000.round_float(0);
         assert_eq!(result, 1.0);
@@ -87,7 +87,7 @@ where
             Err(why) => {
                 let t = std::any::type_name::<T>();
                 eprintln!("f64: {self}");
-                eprintln!("Error converting from {t} to i32.");
+                eprintln!("Error converting decimal places from type {t} to i32.");
                 // std::process::exit(1);
                 panic!("{why}")
             }
@@ -113,20 +113,13 @@ where
             Err(why) => {
                 let t = std::any::type_name::<T>();
                 eprintln!("f32: {self}");
-                eprintln!("Error converting from {t} to i32.");
+                eprintln!("Error converting decimal places from type {t} to i32.");
                 // std::process::exit(1);
                 panic!("{why}")
             }
         }
     }
 }
-
-/*
-// https://users.rust-lang.org/t/u32-u64-mapping-revisited
-fn convert(num: u64) -> u32 {
-    u32::from_ne_bytes(num.to_ne_bytes())
-}
-*/
 
 /// Try Convert Extension
 pub trait TryConvertExtension<T> {
@@ -198,8 +191,37 @@ mod round_numbers {
     // cargo test -- --show-output
 
     #[test]
-    /// `cargo test -- --show-output round_float64`
-    fn round_float64() {
+    /// `cargo test -- --show-output round_float_f64`
+    fn round_float_f64() {
+        let decimal_places: u32 = 2;
+        let number: f64 = 1.454999;
+        let result: f64 = number.round_float(decimal_places);
+        assert_eq!(result, 1.45);
+
+        let decimal_places: usize = 3;
+        let result = 1.455500.round_float(decimal_places);
+        assert_eq!(result, 1.456);
+
+        let decimal_places: u128 = 6;
+        let number: f64 = 3.455000500;
+        let result: f64 = number.round_float(decimal_places);
+        assert_eq!(result, 3.455001);
+
+        let result = 1.455000.round_float(1); // 1i32
+        assert_eq!(result, 1.5);
+
+        let result = 1.455000.round_float(0);
+        assert_eq!(result, 1.0);
+
+        let number: f64 = 5.99997000 + 4.0e-8;
+        let decimal_places: u8 = 255;
+        let result: f64 = number.round_float(decimal_places);
+        assert_eq!(result, 5.99997004);
+
+        let decimal_places: i32 = -1;
+        let result = 1.455000.round_float(decimal_places);
+        assert_eq!(result, 1.0);
+
         let decimal_places: u8 = 255; // type `u8` has range `0..=255`
         let number: f64 = 5.99997000 + 4.0e-8;
         let result: f64 = number.round_float(decimal_places);
@@ -209,5 +231,52 @@ mod round_numbers {
         println!("result: {:.30}", result);
 
         assert_eq!(result, 5.99997004);
+    }
+
+    #[test]
+    fn round_float_f64_negative() {
+        let number: f64 = -2.0 / 3.0;
+        let result: f64 = number.round_float(5);
+        assert_eq!(result, -0.66667);
+
+        let decimal_places: usize = 3;
+        let result = (-1.455000).round_float(decimal_places);
+        assert_eq!(result, -1.455);
+    }
+
+    #[test]
+    fn round_float_f64_zero() {
+        let number: f64 = 0.0;
+        let decimal_places: u64 = 2;
+        let result: f64 = number.round_float(decimal_places);
+        assert_eq!(result, 0.0);
+
+        let decimal_places: usize = 3;
+        let result = 0.000.round_float(decimal_places);
+        assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn round_float_f64_nan() {
+        let number: f64 = f64::NAN;
+        let decimal_places: u32 = 2;
+        let result: f64 = number.round_float(decimal_places);
+        assert!(result.is_nan());
+
+        let decimal_places: isize = 3;
+        let result = f64::NAN.round_float(decimal_places);
+        assert!(result.is_nan());
+    }
+
+    #[test]
+    fn round_float_f64_inf() {
+        let number: f64 = f64::INFINITY;
+        let decimal_places: u32 = 2;
+        let result: f64 = number.round_float(decimal_places);
+        assert!(result.is_infinite());
+
+        let decimal_places: usize = 3;
+        let result = f64::INFINITY.round_float(decimal_places);
+        assert!(result.is_infinite());
     }
 }
