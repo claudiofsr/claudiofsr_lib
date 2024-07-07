@@ -27,8 +27,7 @@ pub trait RoundFloat<T> {
         assert_eq!(result, 1.45);
 
         let decimal_places: usize = 2;
-        let number: f64 = 1.455000;
-        let result: f64 = number.round_float(decimal_places);
+        let result = 1.455000.round_float(decimal_places);
         assert_eq!(result, 1.46);
 
         let decimal_places: u128 = 6;
@@ -36,20 +35,18 @@ pub trait RoundFloat<T> {
         let result: f64 = number.round_float(decimal_places);
         assert_eq!(result, 3.455001);
 
-        let number = 1.455000;
-        let result = number.round_float(1);
+        let result = 1.455000.round_float(1); // 1i32
         assert_eq!(result, 1.5);
 
-        let number = 1.455000;
-        let result = number.round_float(0);
+        let result = 1.455000.round_float(0);
         assert_eq!(result, 1.0);
 
         let number: f32 = -2.0 / 3.0;
-        let result: f32 = number.round_float(5); // 5i32
+        let result: f32 = number.round_float(5);
         assert_eq!(result, -0.66667);
 
         let number: f32 = 5.99997;
-        let result: f32 = number.round_float(4); // 4i32
+        let result: f32 = number.round_float(4);
         assert_eq!(result, 6.0); // 6.0000
 
         let decimal_places: isize = 3;
@@ -58,8 +55,7 @@ pub trait RoundFloat<T> {
         assert_eq!(result, 6.0); // 6.000
 
         let decimal_places: u8 = 4;
-        let number: f32 = 5.00007;
-        let result: f32 = number.round_float(decimal_places);
+        let result: f32 = 5.00007.round_float(decimal_places);
         assert_eq!(result, 5.0001);
     ```
     <https://floating-point-gui.de/languages/rust>
@@ -91,7 +87,9 @@ where
             Err(why) => {
                 let t = std::any::type_name::<T>();
                 eprintln!("f64: {self}");
-                panic!("Error converting from {t} to i32: {why}")
+                eprintln!("Error converting from {t} to i32.");
+                // std::process::exit(1);
+                panic!("{why}")
             }
         }
     }
@@ -115,7 +113,9 @@ where
             Err(why) => {
                 let t = std::any::type_name::<T>();
                 eprintln!("f32: {self}");
-                panic!("Error converting from {t} to i32: {why}")
+                eprintln!("Error converting from {t} to i32.");
+                // std::process::exit(1);
+                panic!("{why}")
             }
         }
     }
