@@ -1,5 +1,5 @@
 /// Round floating numbers (f32 or f64)
-pub trait RoundFloat {
+pub trait RoundFloat<T> {
     /**
     Round floating-point numbers to a specified number of decimal places.
 
@@ -28,8 +28,13 @@ pub trait RoundFloat {
 
         let decimal_places: usize = 2;
         let number: f64 = 1.455000;
-        let result: f64 = number.round_float(decimal_places as i64);
+        let result: f64 = number.round_float(decimal_places);
         assert_eq!(result, 1.46);
+
+        let decimal_places: u128 = 6;
+        let number: f64 = 3.455000500;
+        let result: f64 = number.round_float(decimal_places);
+        assert_eq!(result, 3.455001);
 
         let number = 1.455000;
         let result = number.round_float(1);
@@ -46,36 +51,72 @@ pub trait RoundFloat {
         let number: f32 = 5.99997;
         let result: f32 = number.round_float(4); // 4i32
         assert_eq!(result, 6.0); // 6.0000
+
+        let decimal_places: isize = 3;
+        let number: f32 = 5.99997;
+        let result: f32 = number.round_float(decimal_places);
+        assert_eq!(result, 6.0); // 6.000
+
+        let decimal_places: u8 = 4;
+        let number: f32 = 5.00007;
+        let result: f32 = number.round_float(decimal_places);
+        assert_eq!(result, 5.0001);
     ```
     <https://floating-point-gui.de/languages/rust>
 
-    <https://doc.rust-lang.org/std/primitive.f64.html#method.powf>
+    <https://doc.rust-lang.org/std/primitive.f64.html#method.powi>
+
+    <https://doc.rust-lang.org/std/convert/trait.TryFrom.html>
     */
-    fn round_float(self, decimal_places: impl Into<i64>) -> Self
+    fn round_float(self, decimal_places: T) -> Self
     where
-        Self: std::marker::Sized; // This trait is object safe.
+        Self: std::marker::Sized; // This trait is object safe
 }
 
-impl RoundFloat for f64 {
-    fn round_float(self, decimal_places: impl Into<i64>) -> f64 {
-        let dec: i64 = decimal_places.into();
-        if dec <= 0 || self == 0.0 {
-            self.round()
-        } else {
-            let multiplier: f64 = 10.0_f64.powi(dec as i32);
-            (self * multiplier).round() / multiplier
+impl<T> RoundFloat<T> for f64
+where
+    i32: TryFrom<T>,
+    <i32 as TryFrom<T>>::Error: std::fmt::Display,
+{
+    fn round_float(self, decimal_places: T) -> f64 {
+        match i32::try_from(decimal_places) {
+            Ok(dec) => {
+                if dec <= 0 || self == 0.0 {
+                    self.round()
+                } else {
+                    let multiplier: f64 = 10.0_f64.powi(dec);
+                    (self * multiplier).round() / multiplier
+                }
+            }
+            Err(why) => {
+                let t = std::any::type_name::<T>();
+                eprintln!("f64: {self}");
+                panic!("Error converting from {t} to i32: {why}")
+            }
         }
     }
 }
 
-impl RoundFloat for f32 {
-    fn round_float(self, decimal_places: impl Into<i64>) -> f32 {
-        let dec: i64 = decimal_places.into();
-        if dec <= 0 || self == 0.0 {
-            self.round()
-        } else {
-            let multiplier: f64 = 10.0_f64.powi(dec as i32);
-            (((self as f64) * multiplier).round() / multiplier) as f32
+impl<T> RoundFloat<T> for f32
+where
+    i32: TryFrom<T>,
+    <i32 as TryFrom<T>>::Error: std::fmt::Display,
+{
+    fn round_float(self, decimal_places: T) -> f32 {
+        match i32::try_from(decimal_places) {
+            Ok(dec) => {
+                if dec <= 0 || self == 0.0 {
+                    self.round()
+                } else {
+                    let multiplier: f64 = 10.0_f64.powi(dec);
+                    (((self as f64) * multiplier).round() / multiplier) as f32
+                }
+            }
+            Err(why) => {
+                let t = std::any::type_name::<T>();
+                eprintln!("f32: {self}");
+                panic!("Error converting from {t} to i32: {why}")
+            }
         }
     }
 }
@@ -86,3 +127,87 @@ fn convert(num: u64) -> u32 {
     u32::from_ne_bytes(num.to_ne_bytes())
 }
 */
+
+/// Try Convert Extension
+pub trait TryConvertExtension<T> {
+    /**
+    Try converting type T to type U
+
+    "Simple and safe type conversions that may fail
+    in a controlled way under some circumstances.""
+
+    Example:
+    ```
+        use claudiofsr_lib::TryConvertExtension;
+
+        let type_u8: u8 = 5;
+        let type_i16: i16 = 5;
+        let type_u32: u32 = 5;
+        let type_f64: f64 = 5.0;
+
+        let value_f64: f64 = type_u8.try_convert();
+        assert_eq!(type_f64, value_f64);
+
+        let value_u32: u32 = type_i16.try_convert();
+        assert_eq!(type_u32, value_u32);
+
+        let value_usize: usize = 7_i32.try_convert();
+        assert_eq!(7_usize, value_usize);
+
+        let value_f64: f64 = 9_u16.try_convert();
+        assert_eq!(9.0_f64, value_f64);
+
+        // With TurboFish
+
+        let value_u32 = type_i16.try_convert::<u32>();
+        assert_eq!(type_u32, value_u32);
+
+        let value_f64 = 2_i32.try_convert::<f64>();
+        assert_eq!(2.0_f64, value_f64);
+    ```
+    */
+    fn try_convert<U>(self) -> U
+    where
+        U: TryFrom<T>,
+        <U as TryFrom<T>>::Error: std::fmt::Display;
+}
+
+impl<T> TryConvertExtension<T> for T {
+    fn try_convert<U>(self) -> U
+    where
+        U: TryFrom<T>,
+        <U as TryFrom<T>>::Error: std::fmt::Display,
+    {
+        match U::try_from(self) {
+            Ok(type_u) => type_u,
+            Err(why) => {
+                let t = std::any::type_name::<T>();
+                let u = std::any::type_name::<U>();
+                panic!("Error converting from {t} to {u}: {why}")
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod round_numbers {
+    use super::*;
+
+    // cargo test -- --help
+    // cargo test -- --nocapture
+    // cargo test -- --show-output
+
+    #[test]
+    /// `cargo test -- --show-output round_float64`
+    fn round_float64() {
+        let decimal_places: u8 = 255; // type `u8` has range `0..=255`
+        let number: f64 = 5.99997000 + 4.0e-8;
+        let result: f64 = number.round_float(decimal_places);
+
+        println!("decimal_places: {}", decimal_places);
+        println!("number: {:.30}", number);
+        println!("result: {:.30}", result);
+
+        assert_eq!(result, 5.99997004);
+    }
+}
