@@ -86,10 +86,9 @@ where
             }
             Err(why) => {
                 let t = std::any::type_name::<T>();
-                eprintln!("f64: {self}");
+                eprintln!("fn round_float() for f64: {self}");
                 eprintln!("Error converting decimal places from type {t} to i32.");
-                // std::process::exit(1);
-                panic!("{why}")
+                panic!("Invalid Decimal Places: {why}")
             }
         }
     }
@@ -112,10 +111,9 @@ where
             }
             Err(why) => {
                 let t = std::any::type_name::<T>();
-                eprintln!("f32: {self}");
+                eprintln!("fn round_float() for f32: {self}");
                 eprintln!("Error converting decimal places from type {t} to i32.");
-                // std::process::exit(1);
-                panic!("{why}")
+                panic!("Invalid Decimal Places: {why}")
             }
         }
     }
