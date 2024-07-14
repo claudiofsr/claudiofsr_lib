@@ -1,5 +1,67 @@
 use std::{cmp::Ord, collections::HashSet, hash::Hash};
 
+/// Iterator Extension
+pub trait IteratorExt: Iterator {
+    /**
+    Example:
+    ```
+        use claudiofsr_lib::IteratorExt;
+        //use itertools::Itertools;
+
+        let numbers = vec![1, 3, 2, 2, 5, 2, 3, 4];
+        let unique_numbers: Vec<_> = numbers
+            .into_iter()
+            .get_unique()
+            //.unique()
+            .collect();
+
+        assert_eq!(unique_numbers, &[1, 3, 2, 5, 4]);
+    ```
+    Font: My favorite Rust design pattern
+
+    <https://www.youtube.com/watch?v=qrf52BVaZM8>
+
+    <https://letsgetrusty.com/cheatsheet>
+    */
+    fn get_unique(self) -> UniqueIterator<Self>
+    where
+        Self: Sized,
+        Self::Item: Eq + Hash + Clone,
+    {
+        // default
+        UniqueIterator {
+            iter: self,
+            seen: HashSet::new(),
+        }
+    }
+}
+
+pub struct UniqueIterator<I>
+where
+    I: Iterator,
+    I::Item: Eq + Hash + Clone,
+{
+    iter: I,
+    seen: HashSet<I::Item>,
+}
+
+impl<I> Iterator for UniqueIterator<I>
+where
+    I: Iterator,
+    I::Item: Eq + Hash + Clone,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.find(|item| self.seen.insert(item.clone()))
+    }
+}
+
+// impl IteratorExt for std::vec::IntoIter<i32> {}
+// impl IteratorExt for std::vec::IntoIter<i64> {}
+// ...
+impl<I: Iterator> IteratorExt for I {}
+
 /// Get unique values from vector items.
 pub trait UniqueElements {
     /**

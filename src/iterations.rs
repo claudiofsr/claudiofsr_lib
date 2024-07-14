@@ -25,7 +25,6 @@ You can make the iterator return None when the inner value is an error by using 
         .split(b'\n') // Ignores invalid UTF-8 but
         .try_count(); // Catches other errors
 
-    //assert!(result.is_ok_and(|c| c == 4));
     assert!(matches!(counter, Ok(4)));
 ```
 
