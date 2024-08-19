@@ -1,0 +1,47 @@
+[package]
+name = "claudiofsr_lib"
+version = "0.12.0"
+edition = "2021"
+rust-version = "1.80"
+repository = "https://github.com/claudiofsr/claudiofsr_lib"
+homepage = "https://github.com/claudiofsr/claudiofsr_lib"
+documentation = "https://docs.rs/claudiofsr_lib"
+authors = ["Claudio FSR <claudiofsrodrigues@gmail.com>"]
+description = "General-purpose library used by my programs"
+license = "BSD-3-Clause"
+readme = "README.md"
+categories = ["command-line-utilities"]
+keywords = [
+    "library",
+    "common",
+    "general",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+blake3 = { version = "1.5", features = ["rayon"] }
+chrono = { version = "0.4", features = ["serde"] }
+ilog = "1.0"
+indicatif = {version = "0.17", features = ["rayon"] } # ProgressBar
+itertools = "0.13"
+once_cell = "1.19" # lazy_static alternative
+rayon = "1.10"
+regex = "1.10"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+# https://doc.rust-lang.org/cargo/reference/profiles.html
+debug = true            # Debug info at all.
+strip = "symbols"       # Strip symbols from a binary.
+opt-level = 3           # All optimizations.
+overflow-checks = true  # Panic will occur on overflow.
+lto = true              # Enable link time optimization.
+codegen-units = 1       # Use a single codegen for size optimization.
+panic = "abort"         # Remove traceback information.
+incremental = true      # Save information to disk, improving re-compile times.
+
+[profile.dev]
+opt-level = 1           # Use slightly better optimizations.
