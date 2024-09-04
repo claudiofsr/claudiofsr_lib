@@ -1,6 +1,5 @@
-use once_cell::sync::Lazy;
 use regex::Regex;
-use std::fmt::Display;
+use std::{fmt::Display, sync::LazyLock};
 
 /*
 How to construct large const arrays in Rust without manually writing values to construct it
@@ -229,19 +228,19 @@ pub const PATTERN: &str = r#"(?xi)
     Vend.*Imobiliz|   # Venda de Imobilizado
     Var.*Camb|        # Variação Cambial
     Desc.*Financ|     # Descontos Financeiros
+    Desc.*Obtido|     # Descontos Obtidos
+    Desp.*N.*Oper|    # Despesas Não Operacionais
     Rec.*Financ|      # Receitas Financeiras
     Rec.*N.*Oper|     # Receitas Não Operacionais
-    Outra.*Rec.*Oper| # Outras Receitas Operacionais (mesmo que Receitas Não Operacionais)
+    Outra.*Rec|       # Outras Receitas (mesmo que Receitas Não Operacionais)
+    Outra.*Desp|      # Outras Despesas
     Juro|             # Juros sobre Capital Próprio
     Selic|            # Selic é a taxa básica de juros da economia
     Hedge
 "#;
 
-/// Example:
-///
-/// <https://docs.rs/once_cell/latest/once_cell/sync/struct.Lazy.html>
-pub static OUTRAS_RECEITAS_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(PATTERN).expect("OUTRAS_RECEITAS_REGEX regex inválida!"));
+pub static OUTRAS_RECEITAS_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(PATTERN).expect("OUTRAS_RECEITAS_REGEX regex inválida!"));
 
 #[cfg(test)]
 mod functions {
