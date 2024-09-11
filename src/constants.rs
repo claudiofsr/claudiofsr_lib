@@ -232,8 +232,8 @@ pub const PATTERN: &str = r#"(?xi)
     Desp.*N.*Oper|    # Despesas Não Operacionais
     Rec.*Financ|      # Receitas Financeiras
     Rec.*N.*Oper|     # Receitas Não Operacionais
-    Outra.*Rec|       # Outras Receitas (mesmo que Receitas Não Operacionais)
-    Outra.*Desp|      # Outras Despesas
+    Outras?\s*Rec|    # Outras Receitas (mesmo que Receitas Não Operacionais)
+    Outras?\s*Desp|   # Outras Despesas
     Juro|             # Juros sobre Capital Próprio
     Selic|            # Selic é a taxa básica de juros da economia
     Hedge

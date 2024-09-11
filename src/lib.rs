@@ -50,7 +50,9 @@ pub fn clear_terminal_screen() {
 
     // Alternative solution:
     if result.is_err() {
-        print!("{esc}c", esc = 27 as char);
+        if let Some(esc) = char::from_digit(27, 10) {
+            print!("{esc}c");
+        }
     }
 }
 
