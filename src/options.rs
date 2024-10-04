@@ -207,7 +207,7 @@ where
         F: Fn(T, U) -> R,
     {
         // Zips self with another Option.
-        // If self is Some(x) and other is Some(y), this method returns Some((x, y)). 
+        // If self is Some(x) and other is Some(y), this method returns Some((x, y)).
         // Otherwise, None is returned.
         self.zip(other).map(|(x, y)| f(x, y))
     }
