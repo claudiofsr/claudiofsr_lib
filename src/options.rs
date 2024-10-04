@@ -206,6 +206,9 @@ where
     where
         F: Fn(T, U) -> R,
     {
+        // Zips self with another Option.
+        // If self is Some(x) and other is Some(y), this method returns Some((x, y)). 
+        // Otherwise, None is returned.
         self.zip(other).map(|(x, y)| f(x, y))
     }
 
@@ -213,32 +216,32 @@ where
     where
         T: std::ops::Add<U, Output = R>,
     {
-        let sum = |a, b| a + b;
-        self.combine_with(other, sum)
+        let addition = |a, b| a + b;
+        self.combine_with(other, addition)
     }
 
     fn combine_with_sub<U, R>(self, other: Option<U>) -> Option<R>
     where
         T: std::ops::Sub<U, Output = R>,
     {
-        let sum = |a, b| a - b;
-        self.combine_with(other, sum)
+        let subtraction = |a, b| a - b;
+        self.combine_with(other, subtraction)
     }
 
     fn combine_with_mul<U, R>(self, other: Option<U>) -> Option<R>
     where
         T: std::ops::Mul<U, Output = R>,
     {
-        let mul = |a, b| a * b;
-        self.combine_with(other, mul)
+        let multiplication = |a, b| a * b;
+        self.combine_with(other, multiplication)
     }
 
     fn combine_with_div<U, R>(self, other: Option<U>) -> Option<R>
     where
         T: std::ops::Div<U, Output = R>,
     {
-        let mul = |a, b| a / b;
-        self.combine_with(other, mul)
+        let division = |a, b| a / b;
+        self.combine_with(other, division)
     }
 
     fn to_string(&self) -> String {
