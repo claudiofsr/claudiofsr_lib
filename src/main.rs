@@ -1,7 +1,7 @@
 /**
     cargo test
     cargo test -- --show-output unique_values
-    cargo test -- --show-output SkipBack
+    cargo test -- --show-output SkipBack skip
     cargo clippy
     cargo doc --open
     cargo b -r && cargo install --path=.

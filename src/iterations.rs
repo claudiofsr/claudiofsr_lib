@@ -146,10 +146,11 @@ pub trait SkipBack {
 
         let data2: Vec<_> = [1, 2, 3, 4, 5]
             .into_iter()
+            .skip(1)
             .skip_last()
             .skip(1)
             .collect();
-        assert_eq!(data2, [2, 3, 4] );
+        assert_eq!(data2, [3, 4] );
 
         let data3: Vec<_> = [1, 2, 3]
             .into_iter()
@@ -193,8 +194,10 @@ pub trait SkipBack {
 
     let data3: Vec<_> = [1, 2, 3, 4, 5]
         .into_iter()
-        .skip_back(3)
-        .skip(2)
+        .skip(1)
+        .skip_back(1)
+        .skip_back(2)
+        .skip(1)
         .collect();
     assert_eq!(data3, []);
 
@@ -275,6 +278,15 @@ mod tests {
         let iter6 = 1..=10;
         let data6: Vec<_> = iter6.skip_back(11).collect();
         assert!(data6.is_empty());
+
+        let data7: Vec<_> = [1, 2, 3, 4, 5, 6, 7, 8]
+            .into_iter()
+            .skip(1)
+            .skip_back(3)
+            .skip_back(1)
+            .skip(1)
+            .collect();
+        assert_eq!(data7, [3, 4]);
     }
 
     #[test]
@@ -297,18 +309,26 @@ mod tests {
 }
 
 /*
-pub trait SkipBackPlus: Iterator + Sized {
+pub trait IteratorBack: DoubleEndedIterator + Sized {
+    fn skip_last(self) -> SkipBack<Self> {
+        SkipBack::new(self, 1)
+    }
+
     fn skip_back(self, n: usize) -> SkipBack<Self> {
         SkipBack::new(self, n)
     }
 }
 
+/// A custom iterator that skips elements from the end of the original iterator.
 pub struct SkipBack<I> {
+    /// The underlying iterator.
     iter: I,
+    /// The number of elements to skip from the end.
     n: usize,
 }
 
 impl<I> SkipBack<I> {
+    /// Creates a new `SkipBack` iterator with the specified number of elements to skip from the end.
     fn new(iter: I, n: usize) -> SkipBack<I> {
         SkipBack { iter, n }
     }
@@ -316,10 +336,11 @@ impl<I> SkipBack<I> {
 
 impl<I> Iterator for SkipBack<I>
 where
-    I: Iterator + DoubleEndedIterator,
+    I: DoubleEndedIterator,
 {
     type Item = I::Item;
 
+    /// Advances the iterator by 1 element and decrements `n`.
     fn next(&mut self) -> Option<I::Item> {
         while self.n > 0 {
             self.iter.next_back();
@@ -329,5 +350,5 @@ where
     }
 }
 
-impl<I: Iterator> SkipBackPlus for I {}
+impl<I: DoubleEndedIterator> IteratorBack for I {}
 */
