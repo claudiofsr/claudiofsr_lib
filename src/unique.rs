@@ -37,12 +37,15 @@ pub trait IteratorExt: Iterator + Sized {
 
         let iter = 1..=5;
         let data1: Vec<_> = iter.skip_last().collect();
+        assert_eq!(data1, [1, 2, 3, 4] );
 
-        let data2: Vec<_> = [1, 2, 3]
+        let data2: Vec<_> = [1, 2, 3, 4, 5]
             .into_iter()
+            .skip(1)
             .skip_last()
-            .skip_last()
+            .skip(1)
             .collect();
+        assert_eq!(data2, [3, 4] );
 
         let data3: Vec<_> = [1, 2, 3]
             .into_iter()
@@ -50,9 +53,6 @@ pub trait IteratorExt: Iterator + Sized {
             .skip_last()
             .skip_last()
             .collect();
-
-        assert_eq!(data1, [1, 2, 3, 4] );
-        assert_eq!(data2, [1] );
         assert!(data3.is_empty());
     ```
     <https://users.rust-lang.org/t/iterator-skip-last>
