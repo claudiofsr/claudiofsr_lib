@@ -240,6 +240,22 @@ mod tests {
         let iter = 1..=5;
         let data: Vec<_> = iter.skip_last().collect();
         assert_eq!(data, [1, 2, 3, 4]);
+
+        let iter = 1..=5;
+        let data: Vec<_> = iter
+            //.skip(1)
+            .skip_last()
+            .skip(1)
+            .collect();
+        assert_eq!(data, [2, 3, 4]);
+
+        let data: Vec<_> = [1, 2, 3, 4, 5]
+            .into_iter()
+            .skip(1)
+            .skip_last()
+            .skip(1)
+            .collect();
+        assert_eq!(data, [3, 4]);
     }
 
     #[test]
@@ -279,10 +295,10 @@ mod tests {
         let data6: Vec<_> = iter6.skip_back(11).collect();
         assert!(data6.is_empty());
 
-        let data7: Vec<_> = [1, 2, 3, 4, 5, 6, 7, 8]
+        let data7: Vec<_> = [1, 2, 3, 4, 5, 6, 7]
             .into_iter()
             .skip(1)
-            .skip_back(3)
+            .skip_back(2)
             .skip_back(1)
             .skip(1)
             .collect();
@@ -342,9 +358,15 @@ where
 
     /// Advances the iterator by 1 element and decrements `n`.
     fn next(&mut self) -> Option<I::Item> {
+        /*
         while self.n > 0 {
             self.iter.next_back();
             self.n -= 1;
+        }
+        */
+        if self.n > 0 {
+            self.n -= 1;
+            self.iter.nth_back(std::mem::take(&mut self.n));
         }
         self.iter.next()
     }
