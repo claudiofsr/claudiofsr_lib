@@ -37,7 +37,7 @@ pub mod svec {
     <https://doc.rust-lang.org/std/macro.vec.html>
     */
     macro_rules! svec {
-        ( $($x:expr),+ $(,)?) => {
+        ( $($x:expr_2021),+ $(,)?) => {
             {
                 Vec::from([$(String::from($x)),*])
             }

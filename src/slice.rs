@@ -144,9 +144,14 @@ where
     let remainder = total % n_pieces;
 
     if remainder > 0 {
-        println!("total {total} divided into {n_pieces:2} pieces ; size: {size} or {} ; remainder: {remainder}", size + 1);
+        println!(
+            "total {total} divided into {n_pieces:2} pieces ; size: {size} or {} ; remainder: {remainder}",
+            size + 1
+        );
     } else {
-        println!("total {total} divided into {n_pieces:2} pieces ; size: {size} ; remainder: {remainder}");
+        println!(
+            "total {total} divided into {n_pieces:2} pieces ; size: {size} ; remainder: {remainder}"
+        );
     }
 
     let vector: Vec<&[T]> = data.chunks_at_most(n_pieces).collect();

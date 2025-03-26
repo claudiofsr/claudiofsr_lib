@@ -357,7 +357,10 @@ pub fn get_style(
     chars_index: usize,
     length: usize,
 ) -> MyResult<ProgressStyle> {
-    let template_01 = format!("{{msg:{}}} {{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{percent}}/100% ({{eta}}) [{{elapsed_precise}}]", length);
+    let template_01 = format!(
+        "{{msg:{}}} {{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{percent}}/100% ({{eta}}) [{{elapsed_precise}}]",
+        length
+    );
     let template_02 = format!(
         "{{msg:{}}} {{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{percent}}/100% ({{eta}})",
         length
