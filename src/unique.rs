@@ -37,7 +37,7 @@ pub trait UniqueElements<T> {
     /// Deduplicates elements in the vector while preserving the original order.
     fn unique(&mut self)
     where
-        T: Eq + std::hash::Hash + Clone;
+        T: Eq + Hash + Clone;
 
     /// Deduplicates elements in the vector after sorting them.
     fn unique_ordered(&mut self)
@@ -53,7 +53,7 @@ impl<T> UniqueElements<T> for Vec<T> {
     /// elements first appear. It uses a `HashSet` to efficiently track seen elements.
     fn unique(&mut self)
     where
-        T: Eq + std::hash::Hash + Clone,
+        T: Eq + Hash + Clone,
     {
         // `HashSet` to keep track of elements we've already encountered.
         let mut seen = HashSet::new();
