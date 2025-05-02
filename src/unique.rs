@@ -8,7 +8,7 @@ use std::{cmp::Ord, collections::HashSet, hash::Hash, iter::Peekable};
 /// ### Type Parameters
 ///
 /// * `T`: The type of elements in the vector.
-///     The required trait bounds depend on the method being used.
+///   The required trait bounds depend on the method being used.
 ///     - `unique`: Requires `Eq`, `Hash`, and `Clone`.
 ///     - `unique_ordered`: Requires `Eq` and `Ord`.
 ///

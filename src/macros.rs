@@ -1,7 +1,6 @@
 pub mod svec {
     #![macro_use]
     #[macro_export]
-
     /**
     Create a `Vec<String>` from `Vec<&str>`.
 
@@ -66,7 +65,6 @@ pub mod svec {
 pub mod match_cast {
     #![macro_use]
     #[macro_export]
-
     /**
     Match through different types.
 
