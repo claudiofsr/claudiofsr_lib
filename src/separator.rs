@@ -138,15 +138,15 @@ pub fn thousands_separator_v2(value: f64, decimal: usize) -> String {
 #[cfg(test)]
 mod functions {
     use super::*;
-    use std::error::Error;
+    use crate::MyResult;
 
     // cargo test -- --help
     // cargo test -- --nocapture
     // cargo test -- --show-output
 
     #[test]
-    fn test_thousands_separator() -> Result<(), Box<dyn Error>> {
-        // cargo test -- --show-output test_thousands_separator
+    fn test_thousands_separator() -> MyResult<()> {
+        // cargo test -- --show-outpuResulthousands_separator
 
         let tuples: Vec<(f64, usize)> = vec![
             (-2987954368.369177, 2),

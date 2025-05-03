@@ -1,5 +1,5 @@
+use crate::MyResult;
 use std::{
-    error::Error,
     fs::File,
     io::{BufRead, BufReader},
 };
@@ -68,10 +68,10 @@ pub trait FileExtension {
 
     Example:
     ```
-        use claudiofsr_lib::{FileExtension, open_file};
+        use claudiofsr_lib::{FileExtension, open_file, MyResult};
         use std::{fs::File, io::Write, path::Path, error::Error};
 
-        fn main() -> Result<(), Box<dyn Error>> {
+        fn main() -> MyResult<()> {
 
             let lines = r"A test
             Actual content
@@ -91,11 +91,11 @@ pub trait FileExtension {
         }
     ````
     */
-    fn count_lines(&mut self) -> Result<u64, Box<dyn Error>>;
+    fn count_lines(&mut self) -> MyResult<u64>;
 }
 
 impl FileExtension for File {
-    fn count_lines(&mut self) -> Result<u64, Box<dyn Error>> {
+    fn count_lines(&mut self) -> MyResult<u64> {
         let count: u64 = BufReader::new(self)
             //.lines()     // Return an error if the read bytes are not valid UTF-8
             .split(b'\n') // Ignores invalid UTF-8 but
@@ -108,7 +108,7 @@ impl FileExtension for File {
     /// Count the number of lines in the file
     ///
     /// use memmap2::Mmap;
-    fn count_lines(&mut self) -> Result<u64, Box<dyn Error>> {
+    fn count_lines(&mut self) -> MyResult<u64> {
 
         // https://docs.rs/memmap2/latest/memmap2/struct.Mmap.html
         let count: u64 = unsafe { Mmap::map(&*self)? }

@@ -1,7 +1,7 @@
+use crate::MyResult;
 use itertools::Itertools;
 use std::{
     collections::{BTreeSet, HashSet},
-    error::Error,
     fs::File,
     io::Write,
     path::Path,
@@ -72,7 +72,7 @@ pub trait HashSetExtension<T> {
         T: Ord;
 
     /// Write all HashSet elements to an output file.
-    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    fn write_to_file<P>(&self, output_file: P) -> MyResult<()>
     where
         P: AsRef<Path>;
 }
@@ -92,7 +92,7 @@ where
         self.iter().sorted().cloned().collect()
     }
 
-    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    fn write_to_file<P>(&self, output_file: P) -> MyResult<()>
     where
         P: AsRef<Path>,
     {
@@ -146,7 +146,7 @@ pub trait BTreeSetExtension<T> {
     fn to_vec(&self) -> Vec<T>;
 
     /// Write all BTreeSet elements to an output file.
-    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    fn write_to_file<P>(&self, output_file: P) -> MyResult<()>
     where
         P: AsRef<Path>;
 }
@@ -159,7 +159,7 @@ where
         self.iter().cloned().collect()
     }
 
-    fn write_to_file<P>(&self, output_file: P) -> Result<(), Box<dyn Error>>
+    fn write_to_file<P>(&self, output_file: P) -> MyResult<()>
     where
         P: AsRef<Path>,
     {

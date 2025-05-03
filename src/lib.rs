@@ -4,7 +4,6 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use std::{
     collections::{HashMap, HashSet},
-    error::Error,
     fs::{self, File},
     io::{BufReader, Read, Write},
     ops::Deref,
@@ -328,7 +327,7 @@ where
 ///     assert_eq!(vector1, vector2);
 ///     assert_eq!(vector1, vec![6, 12, 2022]);
 /// ```
-pub fn string_to_vec_of_integers<T>(string: T) -> Result<Vec<u32>, Box<dyn Error>>
+pub fn string_to_vec_of_integers<T>(string: T) -> MyResult<Vec<u32>>
 where
     T: Deref<Target = str>,
 {
@@ -386,7 +385,7 @@ pub fn get_style(
 }
 
 /// Print to file and to stdout
-pub fn my_print<P>(write_buffer: &[u8], path: P) -> Result<(), Box<dyn Error>>
+pub fn my_print<P>(write_buffer: &[u8], path: P) -> MyResult<()>
 where
     P: AsRef<path::Path>,
 {
@@ -416,7 +415,7 @@ where
 /// <https://docs.rs/blake3/latest/blake3>
 ///
 /// <https://rust-lang-nursery.github.io/rust-cookbook/cryptography/hashing.html>
-pub fn blake3_hash<P>(path: P) -> Result<String, Box<dyn Error>>
+pub fn blake3_hash<P>(path: P) -> MyResult<String>
 where
     P: AsRef<Path> + std::marker::Copy + std::fmt::Debug,
 {
@@ -563,7 +562,7 @@ mod functions {
     }
 
     #[test]
-    fn data_dia_mes_ano() -> Result<(), Box<dyn Error>> {
+    fn data_dia_mes_ano() -> MyResult<()> {
         // cargo test -- --show-output data_dia_mes_ano
 
         for (date, result) in [
@@ -585,7 +584,7 @@ mod functions {
     }
 
     #[test]
-    fn test_num_digits() -> Result<(), Box<dyn Error>> {
+    fn test_num_digits() -> MyResult<()> {
         // cargo test -- --show-output num_digits
 
         let input: u8 = 0;
@@ -633,7 +632,7 @@ mod functions {
     }
 
     #[test]
-    fn test_group_anagrams() -> Result<(), Box<dyn Error>> {
+    fn test_group_anagrams() -> MyResult<()> {
         // cargo test -- --show-output test_group_anagrams
         // https://leetcode.com/problems/group-anagrams/description/
         // https://leetcode.com/problems/group-anagrams/solutions/2155441/rust-hashmap-solution-simple/
