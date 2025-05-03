@@ -32,7 +32,7 @@ pub use self::{
     rounded::*, separator::*, slice::*, strings::*, traits::*, unique::*,
 };
 
-pub type MyError = Box<dyn std::error::Error + Send + Sync>;
+pub type MyError = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type MyResult<T> = Result<T, MyError>;
 
 const HEX: [char; 16] = [
