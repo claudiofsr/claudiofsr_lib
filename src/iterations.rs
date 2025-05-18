@@ -146,8 +146,8 @@ pub trait IteratorBack {
 
         let data2: Vec<_> = [1, 2, 3, 4, 5, 6, 7]
             .into_iter()
-            .skip(1)
-            .skip_last()
+            .skip(1)     // Skips from front
+            .skip_last() // Skips from back
             .skip(1)
             .skip_last()
             .skip(1)
