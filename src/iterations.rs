@@ -191,11 +191,11 @@ pub trait IteratorBack {
 
     let dados2: Vec<_> = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         .into_iter()
-        .skip(1)
-        .skip_back(2)
-        .skip(2)
-        .skip_back(1)
-        .skip(1)
+        .skip(1)        // [2, 3, 4, 5, 6, 7, 8, 9]
+        .skip_back(2)   // [2, 3, 4, 5, 6, 7]
+        .skip(2)        // [4, 5, 6, 7]
+        .skip_back(1)   // [4, 5, 6]
+        .skip(1)        // [5, 6]
         .collect();
     assert_eq!(dados2, [5, 6]);
 
