@@ -223,7 +223,7 @@ pub trait IteratorBack {
 // Implement the trait IteratorBack for all iterators that are also DoubleEndedIterator.
 impl<I> IteratorBack for I
 where
-    I: Iterator + DoubleEndedIterator,
+    I: DoubleEndedIterator,
 {
     fn skip_last(mut self) -> Self {
         let _last = self.next_back();
