@@ -122,8 +122,8 @@ impl FileExtension for File {
 }
 
 /**
-The `IteratorBack` trait is a generic interface that allows you to modify the behavior
-of an iterator by skipping a specified number of elements from its end.
+The `IteratorBack` trait provides extension methods for iterators
+to skip a specified number of elements from their end.
 
 It provides two methods:
 
