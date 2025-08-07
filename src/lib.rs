@@ -48,10 +48,10 @@ pub fn clear_terminal_screen() {
     };
 
     // Alternative solution:
-    if result.is_err() {
-        if let Some(esc) = char::from_digit(27, 10) {
-            print!("{esc}c");
-        }
+    if result.is_err()
+        && let Some(esc) = char::from_digit(27, 10)
+    {
+        print!("{esc}c");
     }
 }
 
