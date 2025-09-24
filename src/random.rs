@@ -62,11 +62,11 @@ pub fn rand() -> u64 {
 /// unbiased number after a set number of retries, it falls back to a potentially
 /// biased result to guarantee termination.
 ///
-/// # Arguments
+/// ### Arguments
 /// * `min` - The lower bound of the range (inclusive).
 /// * `max` - The upper bound of the range (inclusive).
 ///
-/// # Errors
+/// ### Errors
 /// Returns an error if `min > max`.
 pub fn random_in_range(min: u64, max: u64) -> MyResult<u64> {
     if min > max {
@@ -107,53 +107,72 @@ pub fn random_in_range(min: u64, max: u64) -> MyResult<u64> {
     Ok(min + (rand() % range_size))
 }
 
-/**
-Shuffle a slice in place using the modern Fisher-Yates algorithm (Durstenfeld's variant).
+/// A trait for shuffling mutable slices in place.
+///
+/// This trait provides a `shuffle` method that shuffles the elements of any mutable
+/// slice `&mut [T]` using the modern Fisher-Yates algorithm (Durstenfeld's variant).
+pub trait Shuffle {
+    /// Shuffles the elements of the slice in place.
+    ///
+    /// This algorithm iterates from the end of the slice to the beginning, swapping
+    /// each element with a randomly selected element from the part of the slice
+    /// that has not yet been shuffled.
+    ///
+    /// ### Examples
+    ///
+    /// ```
+    /// use claudiofsr_lib::Shuffle;
+    ///
+    /// let mut strings = vec!["abc", "foo", "bar", "baz", "mm nn", "zzz"];
+    /// strings.shuffle();
+    /// println!("shuffled strings: {:?}", strings);
+    ///
+    /// let mut integers: Vec<u32> = (1..=20).collect();
+    /// integers.shuffle();
+    /// println!("shuffled integers: {:?}", integers);
+    /// ```
+    ///
+    /// ### Links
+    /// - <https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle>
+    /// - <https://stackoverflow.com/questions/26033976/how-do-i-create-a-vec-from-a-range-and-shuffle-it>
+    fn shuffle(&mut self);
+}
 
-This algorithm iterates from the end of the slice to the beginning, swapping
-each element with a randomly selected element from the part of the slice
-that has not yet been shuffled.
+// Implement the Shuffle trait for any mutable slice of any type T.
+impl<T> Shuffle for &mut [T] {
+    fn shuffle(&mut self) {
+        let len = self.len();
+        // The loop `(1..len).rev()` handles slices of length 0 or 1 gracefully
+        // by not executing, so a separate `if len > 1` check is not needed.
+        for i in (1..len).rev() {
+            // The algorithm swaps the element at index `i` with an element at a
+            // randomly chosen index `j` from the range `[0, i]` (inclusive).
 
-```
-    use claudiofsr_lib::shuffle;
+            // Generate a random index `j` such that `0 <= j <= i`.
+            // The call to `.unwrap()` here is guaranteed to be safe and will never panic.
+            // This is because `random_in_range(min, max)` only returns an `Err`
+            // if `min > max`. In this loop, the arguments are `random_in_range(0, i)`,
+            // and the loop invariant ensures that `i` is always >= 1.
+            // Therefore, `0 <= i` is always true, the function will always return `Ok(...)`,
+            // and the unwrap is safe.
+            let j = random_in_range(0, i as u64).unwrap() as usize;
 
-    let mut strings = vec!["abc", "foo", "bar", "baz", "mm nn", "zzz"];
-    shuffle(&mut strings);
-    println!("strings: {:?}", strings);
+            self.swap(i, j);
+        }
+    }
+}
 
-    let mut integers: Vec<u32> = (1..=20).collect();
-    shuffle(&mut integers);
-    println!("integers: {:?}", integers);
-```
-
-### Links
-- <https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle>
-- <https://stackoverflow.com/questions/26033976/how-do-i-create-a-vec-from-a-range-and-shuffle-it>
-*/
-pub fn shuffle<T>(slice: &mut [T]) {
-    let len = slice.len();
-    // The loop `(1..len).rev()` handles slices of length 0 or 1 gracefully
-    // by not executing, so a separate `if len > 1` check is not needed.
-    for i in (1..len).rev() {
-        // The algorithm swaps the element at index `i` with an element at a
-        // randomly chosen index `j` from the range `[0, i]` (inclusive).
-
-        // Generate a random index `j` such that `0 <= j <= i`.
-        // The call to `.unwrap()` here is guaranteed to be safe and will never panic.
-        // This is because `random_in_range(min, max)` only returns an `Err`
-        // if `min > max`. In this loop, the arguments are `random_in_range(0, i)`,
-        // and the loop invariant ensures that `i` is always >= 1.
-        // Therefore, `0 <= i` is always true, the function will always return `Ok(...)`,
-        // and the unwrap is safe.
-        let j = random_in_range(0, i as u64).unwrap() as usize;
-
-        slice.swap(i, j);
+// Implement the Shuffle trait for Vec<T> by delegating to its slice.
+impl<T> Shuffle for Vec<T> {
+    fn shuffle(&mut self) {
+        self.as_mut_slice().shuffle();
     }
 }
 
 #[cfg(test)]
 mod test_random {
-    use crate::*;
+    use super::*; // Import everything from the parent module
+    use std::collections::HashSet; // Import HashSet for tests
 
     #[test]
     /// Tests that the thread-local RNG is stateful and produces different numbers.
@@ -188,7 +207,7 @@ mod test_random {
         let mut original: Vec<u32> = (1..=100).collect();
         let mut shuffled = original.clone();
 
-        shuffle(&mut shuffled);
+        shuffled.shuffle(); // Using the trait method
 
         println!("original: {original:?}");
         println!("shuffled: {shuffled:?}");
@@ -226,39 +245,10 @@ mod test_random {
     }
 
     #[test]
-    /// `cargo test -- --show-output random_integers_v1`
+    /// `cargo test -- --show-output random_integers`
     ///
     /// <https://stackoverflow.com/questions/48218459/how-do-i-generate-a-vector-of-random-numbers-in-a-range>
-    fn random_integers_v1() -> MyResult<()> {
-        // Example: Get a random integer value in the range 1 to 20:
-        let value: u64 = random_in_range(1, 20)?;
-
-        println!("integer: {value:?}");
-
-        // Generate a vector of 100 64-bit integer values in the range from 1 to 20,
-        // allowing duplicates:
-
-        let integers: Vec<u64> = (0..100)
-            .map(|_| random_in_range(1, 20))
-            .collect::<Result<Vec<u64>, _>>()?;
-
-        println!("integers: {integers:?}");
-
-        let condition_a = integers.iter().min() >= Some(&1);
-        let condition_b = integers.iter().max() <= Some(&20);
-
-        assert!(condition_a);
-        assert!(condition_b);
-        assert_eq!(integers.len(), 100);
-
-        Ok(())
-    }
-
-    #[test]
-    /// `cargo test -- --show-output random_integers_v2`
-    ///
-    /// <https://stackoverflow.com/questions/48218459/how-do-i-generate-a-vector-of-random-numbers-in-a-range>
-    fn random_integers_v2() -> MyResult<()> {
+    fn random_integers() -> MyResult<()> {
         // Example: Get a random integer value in the range 1 to 20:
         let value: u64 = random_in_range(1, 20)?;
 
@@ -301,5 +291,37 @@ mod test_random {
         );
 
         Ok(())
+    }
+
+    #[test]
+    /// Tests the `shuffle` method on empty and single-element vectors.
+    fn shuffle_empty_and_single_element() {
+        let mut empty_vec: Vec<u32> = Vec::new();
+        empty_vec.shuffle();
+        assert!(empty_vec.is_empty());
+
+        let mut single_vec = vec![42];
+        single_vec.shuffle();
+        assert_eq!(single_vec, vec![42]); // Single element remains unchanged
+    }
+
+    #[test]
+    /// Tests that calling shuffle multiple times produces different results (high probability).
+    fn shuffle_multiple_times() {
+        let original: Vec<u32> = (1..=10).collect();
+        let mut first_shuffle = original.clone();
+        first_shuffle.shuffle();
+
+        let mut second_shuffle = original.clone();
+        second_shuffle.shuffle();
+
+        // While not guaranteed, it's astronomically unlikely that two independent shuffles
+        // of the same initial 10 elements will produce the exact same sequence.
+        assert_ne!(first_shuffle, original);
+        assert_ne!(second_shuffle, original);
+        assert_ne!(
+            first_shuffle, second_shuffle,
+            "Two shuffles produced the same result, which is highly unlikely."
+        );
     }
 }

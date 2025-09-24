@@ -39,7 +39,7 @@ fn split_and_insert(integer: &str, insert: char) -> String {
         .chars()
         .enumerate()
         .flat_map(|(i, c)| {
-            if (integer.len() - i) % group_size == 0 && i > 0 {
+            if (integer.len() - i).is_multiple_of(group_size) && i > 0 {
                 Some(insert)
             } else {
                 None
@@ -64,7 +64,7 @@ fn split_and_insert_alternative(integer: &str, insert: char) -> String {
     let mut i = 0;
     loop {
         let j = integer.len() - i;
-        if j % group_size == 0 && i > 0 {
+        if j.is_multiple_of(group_size) && i > 0 {
             string_splitted.push(insert);
         }
         string_splitted.push(chars[i]);
@@ -120,7 +120,8 @@ pub fn thousands_separator_v2(value: f64, decimal: usize) -> String {
                 if integer_digits_remaining > 0 {
                     // Don't add a thousands_sep at the start of the string.
                     // usize::from(negative); // if negative { 1 } else { 0 }
-                    if index != usize::from(negative) && integer_digits_remaining % group_size == 0
+                    if index != usize::from(negative)
+                        && integer_digits_remaining.is_multiple_of(group_size)
                     {
                         formatted.push(thousands_sep);
                     }
