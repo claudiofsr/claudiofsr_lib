@@ -5,6 +5,8 @@
     cargo clippy
     cargo doc --open
     cargo b -r && cargo install --path=.
+    cargo b -r && cargo install --path=. --features "fast-lines"
+
 */
 
 const NAME: &str = env!("CARGO_PKG_NAME");

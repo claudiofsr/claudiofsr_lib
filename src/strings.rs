@@ -361,6 +361,7 @@ where
     }
 
     fn contains_num_digits(&self, num_digit: usize) -> bool {
+        // self.chars().filter(|c| c.is_ascii_digit()).count() == num_digit
         self.chars_count() == num_digit && self.bytes().all(|x| x.is_ascii_digit())
     }
 

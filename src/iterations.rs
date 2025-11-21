@@ -1,124 +1,105 @@
-use crate::MyResult;
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-};
+use std::{fs::File, io};
 
-/**
-Count function consumes the Lines:
+#[cfg(not(feature = "fast-lines"))]
+use std::io::{BufReader, Read};
 
-`let number_of_lines = BufReader::new(file).lines().count();`
+// Importações condicionais apenas se a feature estiver ativa
+#[cfg(feature = "fast-lines")]
+use {memmap2::Mmap, rayon::prelude::*};
 
-`count()` essentially loops over all the elements of the iterator, incrementing a counter until the iterator returns None.
-
-In this case, once the file can no longer be read, the iterator never returns None, and the function runs forever.
-
-You can make the iterator return None when the inner value is an error by using functions such as try_fold().
-
-```
-    use claudiofsr_lib::IteratorExtension;
-    use std::io::{BufRead, BufReader};
-
-    let text: &str = "this\nis\na\ntest\n";
-    let counter: Result<u64, _> = BufReader::new(text.as_bytes())
-        //.lines()    // Return an error if the read bytes are not valid UTF-8
-        .split(b'\n') // Ignores invalid UTF-8 but
-        .try_count(); // Catches other errors
-
-    assert!(matches!(counter, Ok(4)));
-```
-
-<https://www.reddit.com/r/rust/comments/wyk1l0/can_you_compose_stdiolines_with_stditercount/>
-*/
-pub trait IteratorExtension<E> {
-    /**
-    Try to count the iter number
-    ```
-        use claudiofsr_lib::IteratorExtension;
-        use std::io::{BufRead, BufReader};
-
-        let invalid_unicode = b"\xc3\x28\x30\x0a\x31\x0a\x32\x0a";
-        let counter = BufReader::new(&invalid_unicode[..])
-                //.lines(); // Return an error if the read bytes are not valid UTF-8
-                .split(b'\n')
-                .try_count();
-
-        assert!(matches!(counter, Ok(3)));
-    ```
-    <https://www.reddit.com/r/rust/comments/wyk1l0/can_you_compose_stdiolines_with_stditercount/>
-    */
-    fn try_count(&mut self) -> Result<u64, E>;
-}
-
-impl<T, U, E> IteratorExtension<E> for T
-where
-    T: Iterator<Item = Result<U, E>>,
-{
-    fn try_count(&mut self) -> Result<u64, E> {
-        self.try_fold(0, |accumulator: u64, element: Result<U, E>| {
-            element.map(|_| accumulator + 1)
-        })
-    }
-}
-
-/// Adds a counter for the number of lines in a file.
+/// Extension trait adding utility methods for file manipulation.
 pub trait FileExtension {
     /**
-    Count the number of lines in the file.
+    Counts the number of lines in the file using the most efficient method available.
 
-    Example:
+    ### Behavior
+    It strictly counts the newline byte `0x0A` (`\n`), similar to the unix `wc -l` command.
+
+    ### Characteristics:
+    1. **Encoding-agnostic**: Works with UTF-8, ASCII, and legacy encodings (binary safe).
+    2. **Memory Efficient**: Uses `BufReader` for buffered reads and iterates continuously
+       without allocating memory for line strings (Zero-Allocation logic).
+    3. **Side Effects**: The file cursor **will remain at the end of the file**.
+       If you need to read the file again, you must manually `rewind` it.
+
+    ### Implementations
+    1. **Standard (Default)**: Uses `BufReader` and `try_fold`. Zero-allocation and safe.
+    2. **Fast (Feature `fast-lines`)**: Uses `memmap2` and `rayon` for parallel processing.
+       This creates a memory map of the file and counts newlines using multiple CPU threads.
+       *Warning*: This involves `unsafe` code internally.
+
+    ### Example:
     ```
-        use claudiofsr_lib::{FileExtension, open_file, MyResult};
-        use std::{fs::File, io::Write, path::Path, error::Error};
+    use claudiofsr_lib::FileExtension;
+    use std::{fs::File, io::{Seek, Write}};
 
-        fn main() -> MyResult<()> {
+    fn main() -> std::io::Result<()> {
+        let path = "/tmp/sample.txt";
+        let mut file = File::create(path)?;
 
-            let lines = r"A test
-            Actual content
-            More content
-            Another test";
+        // Note: The string ends with \n, so we expect 4 lines.
+        let lines = "Line 1\nLine 2\nLine 3\nLine 4\n";
 
-            let filename = "/tmp/sample.txt";
-            let mut file = File::create(filename)?;
-            file.write_all(lines.as_bytes())?;
+        file.write_all(lines.as_bytes())?;
 
-            let path = Path::new(filename);
-            let mut file: File = open_file(path)?;
-            let number_of_lines: u64 = file.count_lines()?;
+        // Re-open the file for reading
+        let mut file = File::open(path)?;
 
-            assert_eq!(number_of_lines, 4);
-            Ok(())
-        }
-    ````
+        // Count lines
+        let number_of_lines: u64 = file.count_lines()?;
+
+        // Optionally rewind the file cursor if you need to read it again
+        file.rewind()?;
+
+        // Cleanup
+        std::fs::remove_file(path)?;
+
+        assert_eq!(number_of_lines, 4);
+        Ok(())
+    }
+    ```
     */
-    fn count_lines(&mut self) -> MyResult<u64>;
+    fn count_lines(&self) -> io::Result<u64>;
 }
 
+// cargo test -- --show-output count_lines
+// cargo test --features fast-lines -- --show-output count_lines
+
 impl FileExtension for File {
-    fn count_lines(&mut self) -> MyResult<u64> {
-        let count: u64 = BufReader::new(self)
-            //.lines()     // Return an error if the read bytes are not valid UTF-8
-            .split(b'\n') // Ignores invalid UTF-8 but
-            .try_count()?; // Catches other errors
+    // -------------------------------------------------------------------------
+    // Implementation 1: HIGH PERFORMANCE (Requires "fast-lines" feature)
+    // -------------------------------------------------------------------------
+    #[cfg(feature = "fast-lines")]
+    fn count_lines(&self) -> io::Result<u64> {
+        // Safety: Mmap is inherently unsafe because undefined behavior can occur
+        // if the file is truncated or modified by another process while mapped.
+        // However, for a cli utility reading a file, this is usually an acceptable risk.
+        let mmap = unsafe { Mmap::map(self)? };
 
-        Ok(count)
+        // Rayon parallel iterator: splits the byte slice across threads
+        // and counts occurrences of '\n' extremely fast.
+        // We use `filter` instead of `split` to avoid semantic ambiguity and allocations.
+        let count = mmap.par_iter().filter(|&&byte| byte == b'\n').count();
+
+        Ok(count as u64)
     }
 
-    /*
-    /// Count the number of lines in the file
-    ///
-    /// use memmap2::Mmap;
-    fn count_lines(&mut self) -> MyResult<u64> {
-
-        // https://docs.rs/memmap2/latest/memmap2/struct.Mmap.html
-        let count: u64 = unsafe { Mmap::map(&*self)? }
-            .par_split(|&byte| byte == b'\n') // ignore invalid UTF-8
-            .count()
-            .try_into()?;
-
-        Ok(count)
+    // -------------------------------------------------------------------------
+    // Implementation 2: STANDARD (Default - No extra dependencies)
+    // -------------------------------------------------------------------------
+    #[cfg(not(feature = "fast-lines"))]
+    fn count_lines(&self) -> io::Result<u64> {
+        // Wrap the file in a BufReader for efficient I/O (reduces syscalls).
+        // Using a reference to self ensures we don't consume the File ownership.
+        BufReader::new(self)
+            .bytes() // Returns an iterator of Result<u8, io::Error>
+            // try_fold is the functional equivalent of a reduce loop with error propagation.
+            .try_fold(0u64, |acc, byte_result| {
+                // Map the result: if Ok(byte), check for newline.
+                // If Err, it propagates immediately.
+                byte_result.map(|b| if b == b'\n' { acc + 1 } else { acc })
+            })
     }
-    */
 }
 
 /**
@@ -238,7 +219,16 @@ where
     }
 }
 
-/// Tests for the `skip_last` method.
+//----------------------------------------------------------------------------//
+//                                   Tests                                    //
+//----------------------------------------------------------------------------//
+//
+// cargo test -- --help
+// cargo test -- --nocapture
+// cargo test -- --show-output
+
+/// Run tests with:
+/// cargo test -- --show-output skip_last
 #[cfg(test)]
 mod test_skip_last {
     use super::*;
@@ -339,5 +329,46 @@ mod test_skip_back {
             .collect();
 
         assert_eq!(data, ["field_1", "field_2", "field_3"]);
+    }
+}
+
+/// Run tests with:
+/// cargo test -- --show-output count_lines_tests
+/// cargo test --features fast-lines -- --show-output count_lines_tests
+#[cfg(test)]
+mod count_lines_tests {
+    use super::*;
+    use std::io::{Seek, Write};
+
+    #[test]
+    fn test_count_lines() -> io::Result<()> {
+        // Setup: Create a temporary file path
+        let path = "/tmp/sample_lines.txt";
+
+        // Scope to ensure file is written and closed before reading
+        {
+            let mut file = File::create(path)?;
+            // Note: The string ends with \n, so we expect 4 lines.
+            let lines = "Line 1\nLine 2\nLine 3\nLine 4\n";
+            println!("lines:\n{}", lines);
+            file.write_all(lines.as_bytes())?;
+        } // File is closed here
+
+        // Act: Open for reading
+        let mut file = File::open(path)?;
+
+        // Count lines
+        let number_of_lines: u64 = file.count_lines()?;
+
+        // Optional: Rewind if we wanted to read again
+        file.rewind()?;
+
+        // Assert
+        println!("Calculated lines: {}", number_of_lines);
+        assert_eq!(number_of_lines, 4);
+
+        // Cleanup
+        std::fs::remove_file(path)?;
+        Ok(())
     }
 }

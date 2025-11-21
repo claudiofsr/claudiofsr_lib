@@ -1,6 +1,6 @@
 [package]
 name = "claudiofsr_lib"
-version = "0.16.2"
+version = "0.17.0"
 edition = "2024"
 rust-version = "1.88"
 repository = "https://github.com/claudiofsr/claudiofsr_lib"
@@ -26,10 +26,17 @@ ilog = "1.0"
 indicatif = {version = "0.18", features = ["rayon"] } # ProgressBar
 itertools = "0.14"
 rayon = "1.11"
-regex = "1.11"
+regex = "1.12"
 
-[lints.rust]
-unsafe_code = "forbid"
+# Dependências opcionais (só baixadas se a feature for ativada)
+memmap2 = { version = "0.9", optional = true }
+
+[features]
+# Por padrão, nenhuma feature extra é ativada (usa std::io)
+default = []
+
+# Feature para habilitar alta performance em contagem de linhas
+fast-lines = ["dep:memmap2"]
 
 [profile.release]
 # https://doc.rust-lang.org/cargo/reference/profiles.html
