@@ -63,6 +63,36 @@ impl<T: FormattableNumber> FormattableNumber for &T {
 }
 
 // 4. Função principal agora aceita T
+
+/**
+Formats a numeric value into a string with thousands separators and a specific number of decimal places.
+
+This function supports various numeric types (`f32`, `f64`, `Decimal`) via the `FormattableNumber` trait
+and applies formatting based on the selected `FormatStyle` (e.g., swapping dots and commas for Brazilian/European locales).
+
+### Arguments
+
+* `value`: The number to be formatted. It accepts values or references.
+* `decimals`: The number of decimal places to include in the output.
+* `style`: The `FormatStyle` enum determining the separators (e.g., `PtBr`, `Us`, `Euro`).
+
+### Example
+
+```rust
+use claudiofsr_lib::{thousands_separator, FormatStyle};
+use rust_decimal_macros::dec;
+
+let number = 1234567.8952;
+
+// Brazilian format: Dot for thousands, Comma for decimals
+let pt_br = thousands_separator(number, 2, FormatStyle::PtBr);
+assert_eq!(pt_br, "1.234.567,90"); // Note the rounding
+
+// US format: Comma for thousands, Dot for decimals
+let us = thousands_separator(number, 3, FormatStyle::Us);
+assert_eq!(us, "1,234,567.895");
+```
+*/
 pub fn thousands_separator<T: FormattableNumber>(
     value: T,
     decimals: usize,
