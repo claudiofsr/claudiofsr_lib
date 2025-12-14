@@ -1,185 +1,203 @@
-// https://stackoverflow.com/questions/72888582/choose-thousands-and-decimal-separators-for-f64-in-rust
-// https://stackoverflow.com/questions/57029974/how-to-split-string-into-chunks-in-rust-to-insert-spaces
-/// Add the thousands separator to float64 with the specified decimal number.
-///
-/// Example:
-/// ```
-///     use claudiofsr_lib::thousands_separator;
-///
-///     let float64: f64 = -2987954368.369177;
-///     let decimal: usize = 2;
-///     let result: String = thousands_separator(float64, decimal);
-///
-///     assert_eq!(result, "-2.987.954.368,37");
-/// ```
-pub fn thousands_separator(value: f64, decimal: usize) -> String {
-    let abs_value: f64 = value.abs(); // absolute value
-    let round: String = format!("{abs_value:0.decimal$}");
+// ============================================================================
+// thousands_separator
+// ============================================================================
 
-    // integer and fractional part of f64 numbers,
-    let integer: &str = &round[..(round.len() - decimal - 1)];
-    let fraction: &str = &round[(round.len() - decimal)..];
+use rust_decimal::Decimal;
 
-    let decimal_sep: &str = ",";
-    let thousands_sep: char = '.';
+// 1. Criamos um Enum para definir os estilos disponíveis
+pub enum FormatStyle {
+    Euro, // 1.234,56 (Euro)
+    PtBr, // 1.234,56 (Brasil)
+    Us,   // 1,234.56 (EUA/Internacional)
+}
 
-    let integer_splitted: String = split_and_insert(integer, thousands_sep);
+// 2. Definimos uma Trait (interface) para unificar o comportamento
+pub trait FormattableNumber {
+    fn is_negative_num(&self) -> bool;
+    fn format_abs(&self, decimals: usize) -> String;
+}
 
-    if value.is_sign_negative() {
-        "-".to_string() + &integer_splitted + decimal_sep + fraction
+// 3. Implementamos para f32
+impl FormattableNumber for f32 {
+    fn is_negative_num(&self) -> bool {
+        self.is_sign_negative()
+    }
+
+    fn format_abs(&self, decimals: usize) -> String {
+        format!("{:.1$}", self.abs(), decimals)
+    }
+}
+
+// 4. Implementamos para f64
+impl FormattableNumber for f64 {
+    fn is_negative_num(&self) -> bool {
+        self.is_sign_negative()
+    }
+
+    fn format_abs(&self, decimals: usize) -> String {
+        format!("{:.1$}", self.abs(), decimals)
+    }
+}
+
+// 5. Implementamos para Decimal
+impl FormattableNumber for Decimal {
+    fn is_negative_num(&self) -> bool {
+        self.is_sign_negative()
+    }
+
+    fn format_abs(&self, decimals: usize) -> String {
+        // Decimal já implementa Display respeitando a precisão
+        format!("{:.1$}", self.abs(), decimals)
+    }
+}
+
+// 6. A MÁGICA: Blanket Implementation para Referências
+// Isso diz: "Implemente para &T, desde que T já saiba fazer"
+impl<T: FormattableNumber> FormattableNumber for &T {
+    fn is_negative_num(&self) -> bool {
+        (*self).is_negative_num()
+    }
+    fn format_abs(&self, decimals: usize) -> String {
+        (*self).format_abs(decimals)
+    }
+}
+
+// 4. Função principal agora aceita T
+pub fn thousands_separator<T: FormattableNumber>(
+    value: T,
+    decimals: usize,
+    style: FormatStyle,
+) -> String {
+    let round: String = value.format_abs(decimals);
+
+    // Seleciona os separadores baseados no Enum
+    let (thousands_sep, decimal_sep) = match style {
+        FormatStyle::Euro => ('.', ","),
+        FormatStyle::PtBr => ('.', ","),
+        FormatStyle::Us => (',', "."),
+    };
+
+    // Lógica para separar inteiro de fração
+    let (integer, fraction) = if decimals > 0 {
+        // Encontra o ponto gerado pelo format! (sempre usa ponto internamente)
+        if let Some(idx) = round.rfind('.') {
+            (&round[..idx], Some(&round[idx + 1..]))
+        } else {
+            (round.as_str(), None)
+        }
     } else {
-        integer_splitted + decimal_sep + fraction
+        (round.as_str(), None)
+    };
+
+    let integer_splitted = split_and_insert(integer, thousands_sep);
+
+    let result = if let Some(frac) = fraction {
+        format!("{}{}{}", integer_splitted, decimal_sep, frac)
+    } else {
+        integer_splitted
+    };
+
+    if value.is_negative_num() {
+        format!("-{}", result)
+    } else {
+        result
     }
 }
 
-fn split_and_insert(integer: &str, insert: char) -> String {
-    let group_size = 3;
+/// Função auxiliar para inserir os pontos de milhar.
+pub fn split_and_insert(integer: &str, separator: char) -> String {
+    let len = integer.len();
 
-    let string_splitted: String = integer
-        .chars()
-        .enumerate()
-        .flat_map(|(i, c)| {
-            if (integer.len() - i).is_multiple_of(group_size) && i > 0 {
-                Some(insert)
-            } else {
-                None
-            }
-            .into_iter()
-            .chain(std::iter::once(c))
-        })
-        .collect::<String>();
-
-    string_splitted
-}
-
-#[allow(dead_code)]
-fn split_and_insert_alternative(integer: &str, insert: char) -> String {
-    let group_size = 3;
-
-    // Get chars from string.
-    let chars: Vec<char> = integer.chars().collect();
-    // Allocate new string.
-    let mut string_splitted = String::new();
-    // Add characters and thousands_sep in sequence
-    let mut i = 0;
-    loop {
-        let j = integer.len() - i;
-        if j.is_multiple_of(group_size) && i > 0 {
-            string_splitted.push(insert);
-        }
-        string_splitted.push(chars[i]);
-        //println!("i: {} ; j: {} ; string_splitted: {}", i, j, string_splitted);
-        if i >= (integer.len() - 1) {
-            break;
-        }
-        i += 1;
+    // Otimização de caso base: se a string for vazia, retorna imediatamente.
+    if len == 0 {
+        return String::new();
     }
 
-    string_splitted
-}
+    // --- 1. Estratégia de Pré-alocação (Heap Allocation) ---
+    // Strings em Rust são vetores de bytes (Vec<u8>). Se não reservarmos espaço,
+    // o vetor cresce dinamicamente, causando cópias de memória desnecessárias.
 
-/// Add the thousands separator to float64 with the specified decimal number.
-///
-/// Example:
-/// ```
-///     use claudiofsr_lib::thousands_separator_v2;
-///
-///     let float64: f64 = -2987954368.369177;
-///     let decimal: usize = 2;
-///     let result: String = thousands_separator_v2(float64, decimal);
-///
-///     assert_eq!(result, "-2.987.954.368,37");
-/// ```
-///
-/// <https://stackoverflow.com/questions/26998485/is-it-possible-to-print-a-number-formatted-with-thousand-separator-in-rust>
-pub fn thousands_separator_v2(value: f64, decimal: usize) -> String {
-    let round: String = format!("{value:0.decimal$}");
+    // Garante o tamanho correto mesmo para caracteres Unicode multi-byte (ex: emojis, símbolos).
+    let sep_len = separator.len_utf8();
 
-    let decimal_sep: u8 = b',';
-    let thousands_sep: char = '.';
-    let group_size: usize = 3;
+    // Calcula quantos separadores serão inseridos.
+    // Ex: "1000" (len 4) -> (3)/3 = 1 separador. "100" (len 3) -> (2)/3 = 0 separadores.
+    let num_seps = (len - 1) / 3;
 
-    // Position of the `.`
-    let dot_position: usize = round.bytes().position(|c| c == b'.').unwrap_or(round.len());
-    // Is the number negative (starts with `-`)?
-    let negative: bool = value.is_sign_negative();
-    // Number of integer digits remaning (between the `-` or start and the `.`).
-    let mut integer_digits_remaining = dot_position - usize::from(negative);
-    // Output. Add capacity for commas. It's a slight over-estimate but that's fine.
-    let mut formatted = String::with_capacity(round.len() + integer_digits_remaining / group_size);
+    // Calcula o tamanho final exato em bytes.
+    let capacity = len + (num_seps * sep_len);
 
-    // We can iterate on bytes because everything must be ASCII. Slightly faster.
-    for (index, mut byte) in round.bytes().enumerate() {
-        match byte {
-            b'.' => {
-                // Change the decimal separator from '.' for decimal_sep
-                byte = decimal_sep;
-            }
-            b'0'..=b'9' => {
-                // Possibly add a thousands_sep.
-                if integer_digits_remaining > 0 {
-                    // Don't add a thousands_sep at the start of the string.
-                    // usize::from(negative); // if negative { 1 } else { 0 }
-                    if index != usize::from(negative)
-                        && integer_digits_remaining.is_multiple_of(group_size)
-                    {
-                        formatted.push(thousands_sep);
-                    }
-                    integer_digits_remaining -= 1;
-                }
-            }
-            _ => (),
+    // Cria a String com capacidade total reservada. Zero realocações durante o loop.
+    let mut result = String::with_capacity(capacity);
+
+    // --- 2. Iteração e Construção ---
+    // Usamos chars() para iterar corretamente sobre caracteres Unicode.
+    // enumerate() nos dá o índice atual (i).
+    for (i, c) in integer.chars().enumerate() {
+        // Lógica de inserção:
+        // 1. i > 0: Nunca insere separador antes do primeiro dígito.
+        // 2. (len - i): Calcula quantos dígitos faltam para acabar a string.
+        // 3. is_multiple_of(3): Se o que falta é múltiplo de 3, é hora do separador.
+        //    Nota: Assume-se que 'integer' contém apenas dígitos ASCII (0-9).
+        if i > 0 && (len - i).is_multiple_of(3) {
+            result.push(separator);
         }
-        formatted.push(byte as char);
+
+        // Insere o dígito original
+        result.push(c);
     }
 
-    formatted
+    result
 }
+
+//----------------------------------------------------------------------------//
+//                                   Tests                                    //
+//----------------------------------------------------------------------------//
+//
+// cargo test -- --help
+// cargo test -- --nocapture
+// cargo test -- --show-output
 
 #[cfg(test)]
-mod functions {
+mod separator_tests {
     use super::*;
-    use crate::MyResult;
 
-    // cargo test -- --help
-    // cargo test -- --nocapture
-    // cargo test -- --show-output
-
+    /// cargo test -- --show-output thousands_separator_test
     #[test]
-    fn test_thousands_separator() -> MyResult<()> {
-        // cargo test -- --show-outpuResulthousands_separator
+    fn thousands_separator_test() {
+        // Teste com referência de f32 (&f32)
+        let val_f32: &f32 = &-5000.0;
+        let result = thousands_separator(val_f32, 2, FormatStyle::PtBr);
+        println!("f32: {val_f32}");
+        println!("result: {result}\n");
+        assert_eq!(result, "-5.000,00");
 
-        let tuples: Vec<(f64, usize)> = vec![
-            (-2987954368.369177, 2),
-            (123.4, 3),
-            (1234.5, 3),
-            (1234.5, 1),
-            (12345.54321, 8),
-            (-0.15, 4),
-            (1234566.996, 2),
-        ];
+        // Teste com f64
+        let val_f64: f64 = -1234567.8949;
+        let result = thousands_separator(val_f64, 2, FormatStyle::PtBr);
+        println!("f64: {val_f64}");
+        println!("result: {result}\n");
+        assert_eq!(result, "-1.234.567,89");
 
-        let result: Vec<String> = tuples
-            .iter()
-            .map(|(value, decimal)| thousands_separator(*value, *decimal))
-            .collect();
+        // Teste com f64
+        let val_f64: f64 = -1234567.8950;
+        let result = thousands_separator(val_f64, 2, FormatStyle::PtBr);
+        println!("f64: {val_f64}");
+        println!("result: {result}\n");
+        assert_eq!(result, "-1.234.567,90");
 
-        let valid = vec![
-            "-2.987.954.368,37",
-            "123,400",
-            "1.234,500",
-            "1.234,5",
-            "12.345,54321000",
-            "-0,1500",
-            "1.234.567,00",
-        ];
+        // Teste com Decimal
+        let val_decimal: Decimal = Decimal::new(12345678951, 4); // 1234567.8912
+        let result = thousands_separator(val_decimal, 3, FormatStyle::PtBr);
+        println!("decimal: {val_decimal}");
+        println!("result: {result}\n");
+        assert_eq!(result, "1.234.567,895");
 
-        for ((n, d), r) in tuples.iter().zip(&result) {
-            println!("value: {n:20}, decimal: {d} => {r:#?}");
-        }
-
-        assert_eq!(valid, result);
-
-        Ok(())
+        // Teste Estilo Americano
+        let val_f64 = 1234567.8912;
+        let result = thousands_separator(val_f64, 2, FormatStyle::Us);
+        println!("f64: {val_f64}");
+        println!("us result: {result}\n");
+        assert_eq!(result, "1,234,567.89");
     }
 }
