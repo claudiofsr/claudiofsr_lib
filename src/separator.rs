@@ -79,18 +79,17 @@ and applies formatting based on the selected `FormatStyle` (e.g., swapping dots 
 ### Example
 
 ```rust
-use claudiofsr_lib::{thousands_separator, FormatStyle};
-use rust_decimal_macros::dec;
+    use claudiofsr_lib::{thousands_separator, FormatStyle};
 
-let number = 1234567.8952;
+    let number = 1234567.8952;
 
-// Brazilian format: Dot for thousands, Comma for decimals
-let pt_br = thousands_separator(number, 2, FormatStyle::PtBr);
-assert_eq!(pt_br, "1.234.567,90"); // Note the rounding
+    // Brazilian format: Dot for thousands, Comma for decimals
+    let pt_br = thousands_separator(number, 2, FormatStyle::PtBr);
+    assert_eq!(pt_br, "1.234.567,90"); // Note the rounding
 
-// US format: Comma for thousands, Dot for decimals
-let us = thousands_separator(number, 3, FormatStyle::Us);
-assert_eq!(us, "1,234,567.895");
+    // US format: Comma for thousands, Dot for decimals
+    let us = thousands_separator(number, 3, FormatStyle::Us);
+    assert_eq!(us, "1,234,567.895");
 ```
 */
 pub fn thousands_separator<T: FormattableNumber>(
