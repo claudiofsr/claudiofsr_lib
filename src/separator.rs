@@ -2,7 +2,7 @@
 // thousands_separator
 // ============================================================================
 
-use rust_decimal::Decimal;
+use rust_decimal::{Decimal, RoundingStrategy};
 
 // 1. Criamos um Enum para definir os estilos disponíveis
 pub enum FormatStyle {
@@ -46,8 +46,14 @@ impl FormattableNumber for Decimal {
     }
 
     fn format_abs(&self, decimals: usize) -> String {
-        // Decimal já implementa Display respeitando a precisão
-        format!("{:.1$}", self.abs(), decimals)
+        // format!("{:.1$}", self.abs().round_dp(decimals as u32), decimals)
+
+        // Use round_dp_with_strategy para especificar a regra de arredondamento
+        format!(
+            "{:.1$}",
+            self.abs().round_dp_with_strategy(decimals as u32, RoundingStrategy::MidpointNearestEven),
+            decimals
+        )
     }
 }
 
@@ -216,11 +222,32 @@ mod separator_tests {
         assert_eq!(result, "-1.234.567,90");
 
         // Teste com Decimal
-        let val_decimal: Decimal = Decimal::new(12345678951, 4); // 1234567.8912
+        let val_decimal: Decimal = Decimal::new(12345678951, 4); // 1234567.8951
         let result = thousands_separator(val_decimal, 3, FormatStyle::PtBr);
         println!("decimal: {val_decimal}");
         println!("result: {result}\n");
         assert_eq!(result, "1.234.567,895");
+
+        // Teste com Decimal
+        let val_decimal: Decimal = Decimal::new(12345678951, 4); // 1234567.8951
+        let result = thousands_separator(val_decimal, 2, FormatStyle::PtBr);
+        println!("decimal: {val_decimal}");
+        println!("result: {result}\n");
+        assert_eq!(result, "1.234.567,90");
+
+        // Teste com Decimal
+        let val_decimal: Decimal = Decimal::new(12345678950, 4); // 1234567.8950
+        let result = thousands_separator(val_decimal, 2, FormatStyle::PtBr);
+        println!("decimal: {val_decimal}");
+        println!("result: {result}\n");
+        assert_eq!(result, "1.234.567,90");
+
+        // Teste com Decimal
+        let val_decimal: Decimal = Decimal::new(12345678850, 4); // 1234567.8850
+        let result = thousands_separator(val_decimal, 2, FormatStyle::PtBr);
+        println!("decimal: {val_decimal}");
+        println!("result: {result}\n");
+        assert_eq!(result, "1.234.567,88");
 
         // Teste Estilo Americano
         let val_f64 = 1234567.8912;
