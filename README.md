@@ -6,7 +6,7 @@ General-purpose library used by my programs.
 To use this library, add in `Cargo.toml`:
 ```
 [dependencies.claudiofsr_lib]
-version = "0.18"
+version = "0.19"
 # git = "https://github.com/claudiofsr/claudiofsr_lib"
 
 ```

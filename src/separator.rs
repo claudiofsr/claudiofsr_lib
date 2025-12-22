@@ -51,7 +51,8 @@ impl FormattableNumber for Decimal {
         // Use round_dp_with_strategy para especificar a regra de arredondamento
         format!(
             "{:.1$}",
-            self.abs().round_dp_with_strategy(decimals as u32, RoundingStrategy::MidpointNearestEven),
+            self.abs()
+                .round_dp_with_strategy(decimals as u32, RoundingStrategy::MidpointNearestEven),
             decimals
         )
     }

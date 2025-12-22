@@ -5,7 +5,7 @@
     cargo clippy
     cargo doc --open
     cargo b -r && cargo install --path=.
-    cargo b -r && cargo install --path=. --features "fast-lines"
+    cargo b -r && cargo install --path=. --features fast-lines
 
 */
 

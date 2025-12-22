@@ -13,6 +13,7 @@ use std::{
 };
 
 mod constants;
+mod count_digits;
 mod iterations;
 mod macros;
 mod maps;
@@ -27,8 +28,8 @@ mod traits;
 mod unique;
 
 pub use self::{
-    constants::*, iterations::*, macros::*, maps::*, operations::*, options::*, random::*,
-    rounded::*, separator::*, slice::*, strings::*, traits::*, unique::*,
+    constants::*, count_digits::*, iterations::*, macros::*, maps::*, operations::*, options::*,
+    random::*, rounded::*, separator::*, slice::*, strings::*, traits::*, unique::*,
 };
 
 pub type MyError = Box<dyn std::error::Error + Send + Sync + 'static>;
@@ -53,21 +54,6 @@ pub fn clear_terminal_screen() {
     {
         print!("{esc}c");
     }
-}
-
-// https://stackoverflow.com/questions/69297477/getting-the-length-of-an-int
-// https://users.rust-lang.org/t/whats-the-quickest-way-to-get-the-length-of-an-integer
-// https://internals.rust-lang.org/t/pre-rfc-lo-and-hi-methods-for-splitting-integers-into-their-halves
-// https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=f29cbb40ffce2498c005d390b22dd51c
-// https://github.com/blueglyph/ilog
-/// Returns the number of digits in an integer.
-///
-/// The input can be an integer from u8 to u128.
-pub fn num_digits<I>(integer: I) -> usize
-where
-    I: ilog::IntLog,
-{
-    integer.checked_log10().unwrap_or(0) + 1
 }
 
 // https://stackoverflow.com/questions/56620265/how-to-access-the-bufreader-twice/
@@ -574,54 +560,6 @@ mod functions {
             let naive_date: Option<NaiveDate> = get_naive_date(date);
             assert_eq!(naive_date, result);
         }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_num_digits() -> MyResult<()> {
-        // cargo test -- --show-output num_digits
-
-        let input: u8 = 0;
-        let lenght_u8_zero = num_digits(input);
-        println!("num_digits({input}) => {lenght_u8_zero}");
-
-        let input: u8 = 255;
-        let lenght_u8 = num_digits(input);
-        println!("num_digits({input}) => {lenght_u8}");
-
-        let input: u16 = 65535;
-        let lenght_u16 = num_digits(input);
-        println!("num_digits({input}) => {lenght_u16}");
-
-        let input: u32 = 4294967295;
-        let lenght_u32 = num_digits(input);
-        println!("num_digits({input}) => {lenght_u32}");
-
-        let input: f64 = 123456.789;
-        let lenght_f64 = num_digits(input as usize);
-        println!("num_digits({input}) => {lenght_f64}");
-
-        let input: u64 = 18446744073709551615;
-        let lenght_u64 = num_digits(input);
-        println!("num_digits({input}) => {lenght_u64}");
-
-        let input: u128 = 340282366920938463463374607431768211455;
-        let lenght_u128 = num_digits(input);
-        println!("num_digits({input}) => {lenght_u128}");
-
-        assert_eq!(
-            (
-                lenght_u8_zero,
-                lenght_u8,
-                lenght_u16,
-                lenght_u32,
-                lenght_f64,
-                lenght_u64,
-                lenght_u128
-            ),
-            (1, 3, 5, 10, 6, 20, 39)
-        );
 
         Ok(())
     }
