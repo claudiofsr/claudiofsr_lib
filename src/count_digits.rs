@@ -6,6 +6,8 @@
 //! Visual length corresponds to the number of characters used to represent
 //! the number as a string (e.g., including the `-` sign for negative numbers).
 
+use rust_decimal::Decimal;
+
 /// A trait to extend integer types and their options with visual digit counting capabilities.
 pub trait IntegerDigits {
     /// Returns the number of characters required to represent the integer as a base-10 string.
@@ -78,6 +80,7 @@ impl_signed_digit_count!(i8, i16, i32, i64, i128, isize);
 ///
 /// Returns `0` if the value is `None`, otherwise returns the digit count of the inner value.
 impl<T: IntegerDigits> IntegerDigits for Option<T> {
+    /// Returns the digit count of the inner value, or `0` if the value is `None`.
     #[inline]
     fn digit_count(self) -> usize {
         match self {
@@ -107,6 +110,61 @@ pub fn digit_count<T: IntegerDigits>(n: T) -> usize {
     n.digit_count()
 }
 
+impl IntegerDigits for Decimal {
+    /// Calculates the visual character count for a [`Decimal`] value.
+    ///
+    /// ### Logic:
+    /// 1. **Sign**: Adds 1 if the number is negative.
+    /// 2. **Integral Part**: Counts digits before the decimal point.
+    /// 3. **Decimal Point**: Adds 1 if `scale > 0`.
+    /// 4. **Fractional Part**: Adds the number of digits defined by `scale`.
+    ///
+    /// For values between -1 and 1 (exclusive), it ensures at least one `0`
+    /// is counted before the decimal point (e.g., `0.05` counts as 4 characters).
+    ///
+    /// ### Examples:
+    /// ```
+    /// use claudiofsr_lib::IntegerDigits;
+    /// use rust_decimal_macros::dec;
+    ///
+    /// // Example of what appears in cargo doc:
+    /// assert_eq!(dec!(123.45).digit_count(), 6);
+    /// assert_eq!(dec!(-0.001).digit_count(), 6);
+    /// ```    
+    #[inline]
+    fn digit_count(self) -> usize {
+        let scale = self.scale() as usize;
+        let mantissa = self.mantissa(); // i128
+        let abs_mantissa = mantissa.unsigned_abs();
+
+        let sign_len = if mantissa < 0 { 1 } else { 0 };
+
+        if scale == 0 {
+            // Case 1: Integer-like decimal (e.g., 100)
+            if abs_mantissa == 0 {
+                1
+            } else {
+                abs_mantissa.ilog10() as usize + 1 + sign_len
+            }
+        } else {
+            // Case 2: Fractional decimal (e.g., 1.23 or 0.005)
+            // Number of digits in the mantissa
+            let mantissa_digits = if abs_mantissa == 0 {
+                1
+            } else {
+                abs_mantissa.ilog10() as usize + 1
+            };
+
+            // Visual length = Sign + Integral Part + Decimal Point + Fractional Part (scale)
+            // If mantissa_digits <= scale, the visual format is "0.xxxxx",
+            // so the integral part is always at least 1 digit ('0').
+            let visual_digits = std::cmp::max(mantissa_digits, scale + 1);
+
+            visual_digits + 1 + sign_len
+        }
+    }
+}
+
 //----------------------------------------------------------------------------//
 //                                   Tests                                    //
 //----------------------------------------------------------------------------//
@@ -118,6 +176,7 @@ pub fn digit_count<T: IntegerDigits>(n: T) -> usize {
 #[cfg(test)]
 mod count_tests {
     use super::*;
+    use rust_decimal_macros::dec; // Optional: for easier decimal creation
 
     #[test]
     fn test_digit_count_method_syntax() {
@@ -146,5 +205,45 @@ mod count_tests {
         assert_eq!(digit_count(-123), 4);
         assert_eq!(digit_count(Some(12345)), 5);
         assert_eq!(digit_count(None::<i32>), 0);
+    }
+
+    #[test]
+    fn test_decimal_digit_count() {
+        // Integers as Decimals
+        assert_eq!(dec!(123).digit_count(), 3);
+        assert_eq!(dec!(-123).digit_count(), 4);
+        assert_eq!(dec!(0).digit_count(), 1);
+
+        // Decimals with fractional parts
+        assert_eq!(dec!(12.34).digit_count(), 5);
+        assert_eq!(dec!(-12.34).digit_count(), 6);
+        assert_eq!(dec!(0.5).digit_count(), 3);
+        assert_eq!(dec!(-0.5).digit_count(), 4);
+
+        // Decimals with leading zeros in fraction
+        assert_eq!(dec!(0.001).digit_count(), 5);
+        assert_eq!(dec!(-0.001).digit_count(), 6);
+
+        // Decimals with trailing zeros (Decimal preserves scale)
+        let d = Decimal::new(100, 2);
+        assert_eq!(d.digit_count(), 4); // "1.00"
+
+        let zero_with_scale = Decimal::new(0, 3);
+        assert_eq!(zero_with_scale.digit_count(), 5); // "0.000"
+    }
+
+    #[test]
+    fn test_option_decimal_digit_count() {
+        let val_some = Some(dec!(123.45));
+        let val_none: Option<Decimal> = None;
+
+        assert_eq!(val_some.digit_count(), 6);
+        assert_eq!(val_none.digit_count(), 0);
+    }
+
+    #[test]
+    fn test_helper_function_with_decimal() {
+        assert_eq!(digit_count(dec!(10.10)), 5);
+        assert_eq!(digit_count(Some(dec!(-1.1))), 4);
     }
 }
