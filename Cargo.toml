@@ -1,0 +1,57 @@
+[package]
+name = "claudiofsr_lib"
+version = "0.19.7"
+edition = "2024"
+rust-version = "1.92"
+repository = "https://github.com/claudiofsr/claudiofsr_lib"
+homepage = "https://github.com/claudiofsr/claudiofsr_lib"
+documentation = "https://docs.rs/claudiofsr_lib"
+authors = ["Claudio FSR <claudiofsrodrigues@gmail.com>"]
+description = "General-purpose library used by my programs"
+license = "BSD-3-Clause"
+readme = "README.md"
+categories = ["command-line-utilities"]
+keywords = [
+    "library",
+    "common",
+    "general",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+blake3 = { version = "1.8", features = ["rayon"] }
+chrono = { version = "0.4", features = ["serde"] }
+indicatif = {version = "0.18", features = ["rayon"] } # ProgressBar
+itertools = "0.14"
+rayon = "1.11"
+regex = "1.12"
+
+# Dependências opcionais (só baixadas se a feature for ativada)
+rust_decimal = { version = "1.40", optional = true }
+rust_decimal_macros = { version = "1.40", optional = true }
+memmap2 = { version = "0.9", optional = true }
+
+[features]
+# Por padrão, nenhuma feature extra é ativada (usa std::io)
+default = []
+
+# Ativa suporte ao tipo Decimal e macros relacionadas
+decimal = ["dep:rust_decimal", "dep:rust_decimal_macros"]
+
+# Feature para habilitar alta performance em contagem de linhas
+fast-lines = ["dep:memmap2"]
+
+[profile.release]
+# https://doc.rust-lang.org/cargo/reference/profiles.html
+debug = true            # Debug info at all.
+strip = "symbols"       # Strip symbols from a binary.
+opt-level = 3           # All optimizations.
+overflow-checks = true  # Panic will occur on overflow.
+lto = true              # Enable link time optimization.
+codegen-units = 1       # Use a single codegen for size optimization.
+panic = "abort"         # Remove traceback information.
+incremental = true      # Save information to disk, improving re-compile times.
+
+[profile.dev]
+opt-level = 1           # Use slightly better optimizations.
