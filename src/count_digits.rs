@@ -132,7 +132,7 @@ impl IntegerDigits for Decimal {
     /// // Example of what appears in cargo doc:
     /// assert_eq!(dec!(123.45).digit_count(), 6);
     /// assert_eq!(dec!(-0.001).digit_count(), 6);
-    /// ```    
+    /// ```
     #[inline]
     fn digit_count(self) -> usize {
         let scale = self.scale() as usize;

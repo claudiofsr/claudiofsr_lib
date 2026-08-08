@@ -178,48 +178,60 @@ pub const CODIGO_DA_NATUREZA_BC: [u16; 18] = {
     output
 };
 
-pub const CFOP_VENDA_DE_IMOBILIZADO: [u16; 3] = [5551, 6551, 7551];
+/// CFOPs utilizados para a venda de bens do ativo imobilizado.
+///
+/// Essas operações normalmente possuem regras específicas para a apuração de
+/// PIS/COFINS (geralmente não sofrem incidência por não representarem receita bruta
+/// operacional ou faturamento faturável sob a atividade-fim da empresa).
+pub const CFOP_VENDA_DE_IMOBILIZADO: [u16; 3] = [
+    5551, // Venda de bem do ativo imobilizado - Operação interna (dentro do estado)
+    6551, // Venda de bem do ativo imobilizado - Operação interestadual (fora do estado)
+    7551, // Venda de bem do ativo imobilizado - Operação com o exterior (exportação)
+];
 
 /**
-CFOP de Exportação:
-```ignore
-Grupo 7:
+CFOP de Exportação (Apenas Saídas/Vendas):
 
-    7000 .. 7999,
+Este array contempla as operações de saídas relacionadas à exportação:
+1. Exportações Diretas (Grupo 7): Todo o grupo 7000 a 7999 (saídas para o exterior).
+2. Exportações Indiretas (Fim específico de exportação - Saídas):
+   - Estaduais: 5501, 5502, 5503, 5504, 5505
+   - Interestaduais: 6501, 6502, 6503, 6504, 6505
 
-Fim específico de exportação:
-
-    1500, 1501, 1503, 1504, 1505, 1506,
-
-    2500, 2501, 2503, 2504, 2505, 2506,
-
-    3500, 3503,
-
-    5500, 5501, 5502, 5503, 5504, 5505,
-
-    6500, 6501, 6502, 6503, 6504, 6505,
-```
 ### Fonte:
 
 <https://www.gov.br/receitafederal/pt-br/assuntos/aduana-e-comercio-exterior/manuais/exportacao-portal-unico/situacoes-especiais-na-exportacao/exportacao-indireta>
 
-<www.confaz.fazenda.gov.br/legislacao/ajustes/sinief/cfop_cvsn_70_vigente>
+<https://www.confaz.fazenda.gov.br/legislacao/ajustes/sinief/cfop_cvsn_70_vigente>
 */
-pub const CFOP_DE_EXPORTACAO: [u16; 1026] = {
-    let mut output = [0; 1026];
+pub const CFOP_DE_EXPORTACAO: [u16; 1010] = {
+    // 10 CFOPs de saída com fim específico + 1000 códigos da faixa 7000..=7999
+    let mut output = [0; 1010];
 
-    let fim_de_exportacao: [u16; 26] = [
-        1500, 1501, 1503, 1504, 1505, 1506, 2500, 2501, 2503, 2504, 2505, 2506, 3500, 3503, 5500,
-        5501, 5502, 5503, 5504, 5505, 6500, 6501, 6502, 6503, 6504, 6505,
+    // Apenas CFOPs analíticos de SAÍDA (Estaduais e Interestaduais)
+    let fim_de_exportacao: [u16; 10] = [
+        // Estaduais (Grupo 5.500)
+        5501, // Remessa de produção do estabelecimento
+        5502, // Remessa de mercadoria adquirida/recebida de terceiros
+        5503, // Devolução de mercadoria recebida com fim específico
+        5504, // Remessa para formação de lote de exportação (produção própria)
+        5505, // Remessa de mercadoria adquirida de terceiros para formação de lote
+        // Interestaduais (Grupo 6.500)
+        6501, // Remessa de produção do estabelecimento
+        6502, // Remessa de mercadoria adquirida/recebida de terceiros
+        6503, // Devolução de mercadoria recebida com fim específico
+        6504, // Remessa para formação de lote de exportação (produção própria)
+        6505, // Remessa de mercadoria adquirida de terceiros para formação de lote
     ];
 
     let mut index: usize = 0;
 
     while index < output.len() {
-        if index < 26 {
+        if index < 10 {
             output[index] = fim_de_exportacao[index];
         } else {
-            output[index] = (index - 26) as u16 + 7000;
+            // Preenche de 7000 a 7999 para cobrir todas as saídas ao exterior
+            output[index] = (index - 10) as u16 + 7000;
         }
 
         index += 1;
@@ -300,8 +312,8 @@ mod functions {
 
         println!("cfops: {cfops:?}");
 
-        assert_eq!(cfops[0], Some(1500));
-        assert_eq!(cfops[26], Some(7000));
+        assert_eq!(cfops[0], Some(5501));
+        assert_eq!(cfops[10], Some(7000));
     }
 
     #[test]
