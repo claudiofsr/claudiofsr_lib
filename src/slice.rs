@@ -5,9 +5,9 @@
 
 use std::iter::FusedIterator;
 
-/// Extension trait for slices providing balanced $N$-way partitioning.
+/// Extension trait for slices providing balanced N-way partitioning.
 ///
-/// Splits a slice into at most $N$ approximately equal-sized chunks, where earlier chunks
+/// Splits a slice into at most N approximately equal-sized chunks, where earlier chunks
 /// receive the remainder elements one by one until all items are distributed evenly.
 ///
 /// Source: <https://users.rust-lang.org/t/how-to-split-a-slice-into-n-chunks/40008/6>
@@ -88,7 +88,7 @@ impl<T> SliceExtension<T> for [T] {
     }
 }
 
-/// An iterator yielding at most $N$ balanced, contiguous sub-slices.
+/// An iterator yielding at most N balanced, contiguous sub-slices.
 ///
 /// Created by the [`chunks_at_most`](SliceExtension::chunks_at_most) method on slices.
 #[derive(Debug, Clone)]
@@ -142,7 +142,7 @@ impl<T> ExactSizeIterator for ChunksAtMost<'_, T> {}
 
 impl<T> FusedIterator for ChunksAtMost<'_, T> {}
 
-/// Diagnostic helper function to validate and display a slice partitioned into $N$ subsets.
+/// Diagnostic helper function to validate and display a slice partitioned into N subsets.
 ///
 /// # Panics
 /// Panics if the generated chunk count or cumulative item total does not match expectations.
